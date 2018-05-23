@@ -1,8 +1,11 @@
 package com.keyeonacole.popularmovies;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
-import android.provider.Settings;
+
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -14,25 +17,19 @@ import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.Toast;
 
-import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.json.JSONTokener;
+
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+
 
 
 public class MainActivity extends AppCompatActivity {
@@ -45,15 +42,10 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<String> mMyMoviePopularityList = new ArrayList<String>();
 
 
-
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-
 
         // Some interesting information to think implementing from the guide ;) Guess which one
         // Here is a hint: https://docs.google.com/document/d/1ZlN1fUsCSKuInLECcJkslIqvpKlP7jWL2TP9m6UiA6I/pub?embedded=true
@@ -80,37 +72,55 @@ public class MainActivity extends AppCompatActivity {
         // Apply the adapter to the spinner
         spinner.setAdapter(adapter);
 
-       //Get the spinner current state
 
+        if (isNetworkAvailable()){
+            //Spinner listener
+            spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
-        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                //Get the Sort by string
+                final String[] stateArray = getResources().getStringArray(R.array.sortBY_api);
+                String state = null;
 
-            final String[] stateArray = getResources().getStringArray(R.array.sortBY_api);
-            String state = null;
+                @Override
+                public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+                    //Clear the lists
+                     mMyPosterList.clear();
+                     mMyMovieIdList.clear();
+                     mMyMovieOverviewList.clear();
+                     mMyMovieVoteAverageList.clear();
+                     mMyMovieTitleList.clear();
+                     mMyMoviePopularityList.clear();
+                    Integer text = spinner.getSelectedItemPosition();
+                 if (text == 0 ){
+                        state = stateArray[0];
+                        new getMovies().execute(formURL(state));
+                    } else if (text == 1){
+                        state = stateArray[1];
+                        new getMovies().execute(formURL(state));
+                    } else  if (text == 2){
+                        state = stateArray[2];
+                        new getMovies().execute(formURL(state));
+                    }
+             }
 
-            @Override
-            public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                Integer text = spinner.getSelectedItemPosition();
-                if (text == 0 ){
-                    state = stateArray[0];
-                    new getMovies().execute(formURL(state));
-                } else if (text == 1){
-                    state = stateArray[1];
-                    new getMovies().execute(formURL(state));
-                } else  if (text == 2){
-                    state = stateArray[2];
-                    new getMovies().execute(formURL(state));
-                }
+                @Override
+                public void onNothingSelected(AdapterView<?> parentView) {
+                    new getMovies().execute(formURL(stateArray[0]));
             }
+            });
 
-            @Override
-            public void onNothingSelected(AdapterView<?> parentView) {
-                new getMovies().execute(formURL(stateArray[0]));
-            }
+        } else{
+            //OK if the internet option is turned off but does not handle timeouts
+            Toast.makeText(MainActivity.this, "Please Connect to the internet" ,
+                    Toast.LENGTH_LONG).show();
+        }
+    }
 
-        });
-        
-
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
     public URL formURL(String spinnerState){
@@ -121,6 +131,7 @@ public class MainActivity extends AppCompatActivity {
         System.out.println(spinnerState);
 
         //Building the inital API URL and then attempt to connect. Might not be the best way need to sort to get picture id.
+        //Adding Trailer Soon!
         URL url = null;
         try {
             url = new URL(API_BASE + "api_key=" + API_KEY + "&language=en-US&sort_by=" + API_SORT + "&include_adult=false&include_video=false&page=1");
@@ -143,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(URL... voids) {
             //https://api.themoviedb.org/3/discover/movie?api_key=<<api_key>>&language=en-US&sort_by=popularity.desc&include_adult=false&include_video=false&page=1
-            //Sort by Options: original_title.asc original_title.des vote_average.asc vote_average.desc
+            //Sort by Options: popularity.asc popularity.des vote_average.desc
             try {
                 JSONObject moviesObj = jsonDataFromUrl(voids[0]);
                 JSONArray moviesArray = moviesObj.getJSONArray("results");
@@ -226,8 +237,6 @@ public class MainActivity extends AppCompatActivity {
             }
 
 
-
-
         @Override
         protected void onPostExecute(String mMyposterList) {
             if(mMyPosterList == null) {
@@ -238,6 +247,7 @@ public class MainActivity extends AppCompatActivity {
 
             ArrayList<String> al = mMyPosterList;
 
+
             //call the image adapter
             gridview.setAdapter(new gridViewAdapter(getApplicationContext(), al));
             gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -245,6 +255,14 @@ public class MainActivity extends AppCompatActivity {
                                         int position, long id) {
                     Intent toNextPage = new Intent(MainActivity.this,
                             DetailActivity.class);
+                    Bundle bundle = new Bundle();
+                    //I need to add some error checks for null objects
+                    bundle.putString("MovieId", mMyMovieIdList.get(position));
+                    bundle.putString("MovieTitle", mMyMovieTitleList.get(position).toString());
+                    bundle.putString("MovieDescription", mMyMovieOverviewList.get(position));
+                    bundle.putString("MovieVoteAverage", mMyMovieVoteAverageList.get(position));
+                    bundle.putString("MoviePopularity", mMyMoviePopularityList.get(position));
+                    toNextPage.putExtras(bundle);
                     startActivity(toNextPage);
                     Toast.makeText(MainActivity.this, "" + position,
                             Toast.LENGTH_SHORT).show();
