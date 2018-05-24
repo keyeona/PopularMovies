@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">Popular Movies</string>
+    <!-- TODO 1: Put your API key  in the string theMovieDbKey -->
+    <string name="theMovieDbKey">Your_KEY_HERE</string>
+    <string name="apiCallBase">https://api.themoviedb.org/4/discover/movie?</string>
+    <string name="language">language=en-US</string>
+    <string name="defaultSort">original_title.desc</string>
+
+
+    <string-array name="sortBY_api">
+        <item>popularity.desc</item>
+        <item>vote_average.desc</item>
+        <item>popularity.asc</item>
+
+
+    </string-array>
+
+    <string-array name="filter_options">
+        <item>By Highest rating</item>
+        <item>By Highest Vote Average </item>
+        <item>By Lowest rating</item>
+
+    </string-array>
+
+
+</resources>
