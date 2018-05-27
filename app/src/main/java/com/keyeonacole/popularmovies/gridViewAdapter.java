@@ -53,9 +53,7 @@ public class gridViewAdapter extends BaseAdapter {
 
         if (convertView == null) {
             view = new ImageView(mContext);
-            //TODO I would let to make this dynamic.
             view.setLayoutParams(new GridView.LayoutParams(520, 600));
-            //view.setScaleType(ImageView.ScaleType.CENTER_CROP);
             view.setPadding(10, 10, 10, 10);
         } else {
             view = (ImageView) convertView;

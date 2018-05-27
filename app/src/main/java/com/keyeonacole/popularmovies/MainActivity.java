@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
-
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,12 +15,9 @@ import android.widget.GridView;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.Toast;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -29,17 +25,18 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-
+import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity {
     ProgressBar mProgressBar;
-    ArrayList<String> mMyPosterList = new ArrayList<String>();
-    ArrayList<String> mMyMovieIdList = new ArrayList<String>();
-    ArrayList<String> mMyMovieOverviewList = new ArrayList<String>();
-    ArrayList<String> mMyMovieVoteAverageList = new ArrayList<String>();
-    ArrayList<String> mMyMovieTitleList = new ArrayList<String>();
-    ArrayList<String> mMyMoviePopularityList = new ArrayList<String>();
+    private List<String> mMyPosterList= new ArrayList<>();
+    private List<String> mMyMovieReleaseList= new ArrayList<>();
+    private List<String> mMyMovieOverviewList= new ArrayList<>();
+    private List<String> mMyMovieVoteAverageList= new ArrayList<>();
+    private List<String> mMyMovieTitleList= new ArrayList<>();
+
+
 
 
     @Override
@@ -62,59 +59,52 @@ public class MainActivity extends AppCompatActivity {
 
 
         final Spinner spinner = (Spinner) findViewById(R.id.spinner);
-
         // Create an ArrayAdapter using the string array and a default spinner layout
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
                 R.array.filter_options, android.R.layout.simple_spinner_item);
-
         // Specify the layout to use when the list of choices appears
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-
         // Apply the adapter to the spinner
         spinner.setAdapter(adapter);
 
 
-        if (isNetworkAvailable()){
             //Spinner listener
             spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
                 //Get the Sort by string
-                final String[] stateArray = getResources().getStringArray(R.array.sortBY_api);
                 String state = null;
 
                 @Override
                 public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                    //Clear the lists
-                     mMyPosterList.clear();
-                     mMyMovieIdList.clear();
-                     mMyMovieOverviewList.clear();
-                     mMyMovieVoteAverageList.clear();
-                     mMyMovieTitleList.clear();
-                     mMyMoviePopularityList.clear();
-                    Integer text = spinner.getSelectedItemPosition();
-                 if (text == 0 ){
-                        state = stateArray[0];
-                        new getMovies().execute(formURL(state));
-                    } else if (text == 1){
-                        state = stateArray[1];
-                        new getMovies().execute(formURL(state));
-                    } else  if (text == 2){
-                        state = stateArray[2];
-                        new getMovies().execute(formURL(state));
+                    if (isNetworkAvailable()){
+                     //Clear the lists
+                        mMyPosterList.clear();
+                        mMyMovieReleaseList.clear();
+                        mMyMovieOverviewList.clear();
+                        mMyMovieVoteAverageList.clear();
+                         mMyMovieTitleList.clear();
+                        Integer text = spinner.getSelectedItemPosition();
+                        System.out.println(text);
+                         if (text == 0 ){
+                            state = "rating";
+                             new getMovies().execute(formURL(state));
+                        } else if (text == 1){
+                            state = "popularity";
+                           new getMovies().execute(formURL(state));
+                        }
+                    }else{
+                        Toast.makeText(MainActivity.this, "Please Connect to the internet" ,
+                                Toast.LENGTH_LONG).show();
                     }
              }
 
                 @Override
                 public void onNothingSelected(AdapterView<?> parentView) {
-                    new getMovies().execute(formURL(stateArray[0]));
+                    new getMovies().execute(formURL(state));
             }
             });
 
-        } else{
             //OK if the internet option is turned off but does not handle timeouts
-            Toast.makeText(MainActivity.this, "Please Connect to the internet" ,
-                    Toast.LENGTH_LONG).show();
-        }
     }
 
     private boolean isNetworkAvailable() {
@@ -125,18 +115,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public URL formURL(String spinnerState){
-
         final String API_KEY = getResources().getString(R.string.theMovieDbKey);
-        final String API_BASE = getResources().getString(R.string.apiCallBase);
-        final String API_SORT= spinnerState;
-        System.out.println(spinnerState);
 
-        //Building the inital API URL and then attempt to connect. Might not be the best way need to sort to get picture id.
-        //Adding Trailer Soon!
+        final String API_BASERating = getResources().getString(R.string.apiCallBaseRating);
+        final String API_BASEPopularity = getResources().getString(R.string.apiCallBasePopularity);
+
+
+        System.out.println(spinnerState);
         URL url = null;
         try {
-            url = new URL(API_BASE + "api_key=" + API_KEY + "&language=en-US&sort_by=" + API_SORT + "&include_adult=false&include_video=false&page=1");
-
+            if (spinnerState == "popularity"){
+                url = new URL(API_BASEPopularity + "api_key=" + API_KEY + "&language=en-US&page=1");
+            }else if (spinnerState == "rating"){
+                url = new URL(API_BASERating + "api_key=" + API_KEY + "&language=en-US&page=1");
+            }
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
@@ -155,51 +147,38 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(URL... voids) {
             //https://api.themoviedb.org/3/discover/movie?api_key=<<api_key>>&language=en-US&sort_by=popularity.desc&include_adult=false&include_video=false&page=1
-            //Sort by Options: popularity.asc popularity.des vote_average.desc
             try {
                 JSONObject moviesObj = jsonDataFromUrl(voids[0]);
                 JSONArray moviesArray = moviesObj.getJSONArray("results");
                 System.out.println(moviesObj);
-
-
-
                 for (int i = 0; i < moviesArray.length(); ++i) {
                     String PosterUrlSuffix = parseJsonData(moviesArray, "poster_path", i);
-                    String combined = new String ("http://image.tmdb.org/t/p/w780/" + PosterUrlSuffix);
+                    String combined = new String("http://image.tmdb.org/t/p/w780/" + PosterUrlSuffix);
                     mMyPosterList.add(combined);
-
-                    String myMovieID = parseJsonData(moviesArray, "id", i);
-                    mMyMovieIdList.add(myMovieID);
+                    String myMovieReleaseDate = parseJsonData(moviesArray, "release_date", i);
+                    mMyMovieReleaseList.add(myMovieReleaseDate);
                     String myMovieOverview = parseJsonData(moviesArray, "overview", i);
                     mMyMovieOverviewList.add(myMovieOverview);
                     String myMovieVoteAverage = parseJsonData(moviesArray, "vote_average", i);
                     mMyMovieVoteAverageList.add(myMovieVoteAverage);
                     String myMovieTitle = parseJsonData(moviesArray, "title", i);
                     mMyMovieTitleList.add(myMovieTitle);
-                    String myMoviePopularity = parseJsonData(moviesArray, "popularity", i);
-                    mMyMoviePopularityList.add(myMoviePopularity);
-
                 }
-
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-
             return String.valueOf(mMyPosterList);
         }
 
 
         public JSONObject jsonDataFromUrl(URL movieCall) throws IOException, JSONException {
-
             try {
                 URL apiCall = movieCall;
                 HttpURLConnection urlConnection = (HttpURLConnection) apiCall.openConnection();
                 urlConnection.setRequestMethod("GET");
                 urlConnection.connect();
-
-
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
                 StringBuilder stringBuilder = new StringBuilder();
                 String line;
@@ -207,48 +186,39 @@ public class MainActivity extends AppCompatActivity {
                     stringBuilder.append(line).append("\n");
                 }
                 bufferedReader.close();
-
                 String jsonData = stringBuilder.toString();
                 urlConnection.disconnect();
-
                 return new JSONObject(jsonData);
-
             } catch (IOException e) {
                 Log.e("ERROR", e.getMessage(), e);
                 return null;
             }
         }
 
-            public String parseJsonData(JSONArray jsonData, String filter, Integer i) {
-                if (jsonData != null) {
-                    try {
-
-                        JSONObject movieDataOBJ = jsonData.getJSONObject(i);
-
-                        String movieData = movieDataOBJ.getString(filter);
-                        System.out.println(movieData);
-
-                        return movieData;
-                    } catch (JSONException e) {
-                        Log.e("JSON Exception", e.getMessage(), e);
-                    }
-
+        public String parseJsonData(JSONArray jsonData, String filter, Integer i) {
+            if (jsonData != null) {
+                try {
+                    JSONObject movieDataOBJ = jsonData.getJSONObject(i);
+                    String movieData = movieDataOBJ.getString(filter);
+                    System.out.println(movieData);
+                    return movieData;
+                } catch (JSONException e) {
+                    Log.e("JSON Exception", e.getMessage(), e);
                 }
-            return null;
+
             }
+            return null;
+        }
 
 
         @Override
         protected void onPostExecute(String mMyposterList) {
-            if(mMyPosterList == null) {
+            if (mMyPosterList == null) {
                 mMyposterList = "THERE WAS AN ERROR: the data returned null";
 
             }
             GridView gridview = findViewById(R.id.gridview);
-
-            ArrayList<String> al = mMyPosterList;
-
-
+            ArrayList<String> al = (ArrayList<String>) mMyPosterList;
             //call the image adapter
             gridview.setAdapter(new gridViewAdapter(getApplicationContext(), al));
             gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -258,23 +228,20 @@ public class MainActivity extends AppCompatActivity {
                             DetailActivity.class);
                     Bundle bundle = new Bundle();
                     //I need to add some error checks for null objects
-                    bundle.putString("MovieId", mMyMovieIdList.get(position));
-                    bundle.putString("MovieTitle", mMyMovieTitleList.get(position).toString());
+                    bundle.putString("MovieRelease", mMyMovieReleaseList.get(position));
+                    bundle.putString("MovieTitle", mMyMovieTitleList.get(position));
                     bundle.putString("MovieDescription", mMyMovieOverviewList.get(position));
                     bundle.putString("MovieVoteAverage", mMyMovieVoteAverageList.get(position));
-                    bundle.putString("MoviePopularity", mMyMoviePopularityList.get(position));
+                    bundle.putString("MoviePoster", mMyPosterList.get(position));
                     toNextPage.putExtras(bundle);
                     startActivity(toNextPage);
                     Toast.makeText(MainActivity.this, "" + position,
                             Toast.LENGTH_SHORT).show();
                 }
-
             });
 
             mProgressBar.setVisibility(View.GONE);
             Log.i("INFO", mMyposterList);
-
         }
     }
-
 }
