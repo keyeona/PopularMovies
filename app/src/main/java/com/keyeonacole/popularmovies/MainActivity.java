@@ -15,6 +15,10 @@ import android.widget.GridView;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.Toast;
+
+import com.keyeonacole.popularmovies.database.MovieDataEntry;
+import com.keyeonacole.popularmovies.database.movieDatabase;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -28,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+
 public class MainActivity extends AppCompatActivity {
     ProgressBar mProgressBar;
     private List<String> mMyPosterList= new ArrayList<>();
@@ -35,6 +40,9 @@ public class MainActivity extends AppCompatActivity {
     private List<String> mMyMovieOverviewList= new ArrayList<>();
     private List<String> mMyMovieVoteAverageList= new ArrayList<>();
     private List<String> mMyMovieTitleList= new ArrayList<>();
+    private List<String> mMyMovieTrailerKeyList= new ArrayList<>();
+
+    private movieDatabase mdb;
 
 
 
@@ -43,6 +51,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mdb = movieDatabase.getInstance(getApplicationContext());
         //Maybe I should add a check to see if the API string is the same...
 
         // Some interesting information to think implementing from the guide ;) Guess which one
@@ -67,7 +77,6 @@ public class MainActivity extends AppCompatActivity {
         // Apply the adapter to the spinner
         spinner.setAdapter(adapter);
 
-
             //Spinner listener
             spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
@@ -83,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
                         mMyMovieOverviewList.clear();
                         mMyMovieVoteAverageList.clear();
                          mMyMovieTitleList.clear();
+                         mMyMovieTrailerKeyList.clear();
                         Integer text = spinner.getSelectedItemPosition();
                         System.out.println(text);
                          if (text == 0 ){
@@ -97,13 +107,11 @@ public class MainActivity extends AppCompatActivity {
                                 Toast.LENGTH_LONG).show();
                     }
              }
-
                 @Override
                 public void onNothingSelected(AdapterView<?> parentView) {
                     new getMovies().execute(formURL(state));
             }
             });
-
             //OK if the internet option is turned off but does not handle timeouts
     }
 
@@ -136,7 +144,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public class getMovies extends AsyncTask<URL, Void, String> {
-
         @Override
         protected void onPreExecute() {
             mProgressBar = findViewById(R.id.progressBar);
@@ -147,13 +154,18 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(URL... voids) {
             //https://api.themoviedb.org/3/discover/movie?api_key=<<api_key>>&language=en-US&sort_by=popularity.desc&include_adult=false&include_video=false&page=1
+            //http://api.themoviedb.org/3/movie/157336/videos?api_key=###
             try {
                 JSONObject moviesObj = jsonDataFromUrl(voids[0]);
                 JSONArray moviesArray = moviesObj.getJSONArray("results");
                 System.out.println(moviesObj);
+                final String API_KEY = getResources().getString(R.string.theMovieDbKey);
+
+
                 for (int i = 0; i < moviesArray.length(); ++i) {
                     String PosterUrlSuffix = parseJsonData(moviesArray, "poster_path", i);
                     String combined = new String("http://image.tmdb.org/t/p/w780/" + PosterUrlSuffix);
+
                     mMyPosterList.add(combined);
                     String myMovieReleaseDate = parseJsonData(moviesArray, "release_date", i);
                     mMyMovieReleaseList.add(myMovieReleaseDate);
@@ -163,6 +175,27 @@ public class MainActivity extends AppCompatActivity {
                     mMyMovieVoteAverageList.add(myMovieVoteAverage);
                     String myMovieTitle = parseJsonData(moviesArray, "title", i);
                     mMyMovieTitleList.add(myMovieTitle);
+                    String movieID = parseJsonData(moviesArray, "id", i);
+                    URL movieTrailers = new URL("http://api.themoviedb.org/3/movie/" + movieID + "/videos?api_key="+ API_KEY);
+                    JSONObject trailersObj = jsonDataFromUrl(movieTrailers);
+                    JSONArray trailersArrays = trailersObj.getJSONArray("results");
+                    String trailerKey = trailersArrays.getJSONObject(0).getString("key");
+                    mMyMovieTrailerKeyList.add(trailerKey);
+
+                    //String youtubeID = trailersArrays;
+                    System.out.println(
+                            trailerKey
+                    );
+
+                    Boolean favoriteStatus = new Boolean("false");
+
+
+
+                    System.out.println(movieTrailers);
+
+                    //MovieDataEntry movie = new MovieDataEntry(movieID, combined, myMovieReleaseDate, myMovieOverview, myMovieVoteAverage, myMovieTitle, movieTrailers, favoriteStatus );
+                    //mdb.MovieDao().insertAll(movie);
+
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -205,14 +238,16 @@ public class MainActivity extends AppCompatActivity {
                 } catch (JSONException e) {
                     Log.e("JSON Exception", e.getMessage(), e);
                 }
-
             }
             return null;
         }
 
 
+
+
         @Override
         protected void onPostExecute(String mMyposterList) {
+
             if (mMyPosterList == null) {
                 mMyposterList = "THERE WAS AN ERROR: the data returned null";
 
@@ -233,6 +268,7 @@ public class MainActivity extends AppCompatActivity {
                     bundle.putString("MovieDescription", mMyMovieOverviewList.get(position));
                     bundle.putString("MovieVoteAverage", mMyMovieVoteAverageList.get(position));
                     bundle.putString("MoviePoster", mMyPosterList.get(position));
+                    bundle.putString("MovieTrailerKey", mMyMovieTrailerKeyList.get(position));
                     toNextPage.putExtras(bundle);
                     startActivity(toNextPage);
                     Toast.makeText(MainActivity.this, "" + position,

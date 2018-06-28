@@ -5,6 +5,8 @@
     <string name="apiCallBasePopularity">https://api.themoviedb.org/3/movie/popular?</string>
     <string name="apiCallBaseRating">https://api.themoviedb.org/3/movie/top_rated?</string>
 
+    <string name="trailer_base">http://api.themoviedb.org/3/movie/</string>
+
 
     <string-array name="filter_options">
         <item>By Highest rated</item>
