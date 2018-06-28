@@ -53,21 +53,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mdb = movieDatabase.getInstance(getApplicationContext());
-        //Maybe I should add a check to see if the API string is the same...
-
-        // Some interesting information to think implementing from the guide ;) Guess which one
-        // Here is a hint: https://docs.google.com/document/d/1ZlN1fUsCSKuInLECcJkslIqvpKlP7jWL2TP9m6UiA6I/pub?embedded=true
-        // You can use Picasso to easily load album art thumbnails into your views using:
-        //
-        // Picasso.with(context).load("http://i.imgur.com/DvpvklR.png").into(imageView);
-        //
         // Picasso will handle loading the images on a background thread, image decompression and caching the images.
         //http://api.themoviedb.org/3/movie/popular?api_key=[YOUR_API_KEY]
-
-        //IMPORTANT: PLEASE REMOVE YOUR API KEY WHEN SHARING CODE PUBLICALLY
         //Please use the string theMovieDbKey
-
-
         final Spinner spinner = (Spinner) findViewById(R.id.spinner);
         // Create an ArrayAdapter using the string array and a default spinner layout
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
@@ -181,8 +169,6 @@ public class MainActivity extends AppCompatActivity {
                     JSONArray trailersArrays = trailersObj.getJSONArray("results");
                     String trailerKey = trailersArrays.getJSONObject(0).getString("key");
                     mMyMovieTrailerKeyList.add(trailerKey);
-
-                    //String youtubeID = trailersArrays;
                     System.out.println(
                             trailerKey
                     );
@@ -190,11 +176,9 @@ public class MainActivity extends AppCompatActivity {
                     Boolean favoriteStatus = new Boolean("false");
 
 
-
-                    System.out.println(movieTrailers);
-
-                    //MovieDataEntry movie = new MovieDataEntry(movieID, combined, myMovieReleaseDate, myMovieOverview, myMovieVoteAverage, myMovieTitle, movieTrailers, favoriteStatus );
-                    //mdb.MovieDao().insertAll(movie);
+                    MovieDataEntry movie = new MovieDataEntry(movieID, combined, myMovieReleaseDate, myMovieOverview, myMovieVoteAverage, myMovieTitle, trailerKey, favoriteStatus );
+                    mdb.MovieDao().insertAll(movie);
+                    mdb.MovieDao().loadAllByFavorites(favoriteStatus);
 
                 }
             } catch (IOException e) {
