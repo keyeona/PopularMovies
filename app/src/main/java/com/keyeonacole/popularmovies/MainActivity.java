@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -30,11 +31,12 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.concurrent.Executor;
 
 
 public class MainActivity extends AppCompatActivity {
     ProgressBar mProgressBar;
+    private List<String> mMyMovieIds= new ArrayList<>();
     private List<String> mMyPosterList= new ArrayList<>();
     private List<String> mMyMovieReleaseList= new ArrayList<>();
     private List<String> mMyMovieOverviewList= new ArrayList<>();
@@ -74,22 +76,40 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
                     if (isNetworkAvailable()){
-                     //Clear the lists
-                        mMyPosterList.clear();
-                        mMyMovieReleaseList.clear();
-                        mMyMovieOverviewList.clear();
-                        mMyMovieVoteAverageList.clear();
-                         mMyMovieTitleList.clear();
-                         mMyMovieTrailerKeyList.clear();
                         Integer text = spinner.getSelectedItemPosition();
                         System.out.println(text);
                          if (text == 0 ){
-                            state = "rating";
+                             clearList();
+                             state = "rating";
                              new getMovies().execute(formURL(state));
                         } else if (text == 1){
-                            state = "popularity";
-                           new getMovies().execute(formURL(state));
-                        }
+                             clearList();
+                             state = "popularity";
+                             new getMovies().execute(formURL(state));
+                        } else if (text == 2){
+                             state = "skip";
+                             Toast.makeText(MainActivity.this, "Prepare for failure!" ,
+                                     Toast.LENGTH_LONG).show();
+
+                             final Boolean favoriteStatus = new Boolean("true");
+                             mdb = movieDatabase.getInstance(getApplicationContext());
+                             final Runnable r = new Runnable() {
+                                 @Override
+                                 public void run() {
+                                     //List<MovieDataEntry> test = mdb.MovieDao().loadAllByFavorites(favoriteStatus);
+                                     List<MovieDataEntry> test = mdb.MovieDao().getAll();
+
+                                     Integer fto = test.size();
+                                     //String fromDB = test.get(fto - 1).getMyMovieTitle();
+                                     System.out.println(fto);
+
+
+
+                                 }
+                             };
+                             new executeDB().execute(r);
+                             System.out.println();
+                         }
                     }else{
                         Toast.makeText(MainActivity.this, "Please Connect to the internet" ,
                                 Toast.LENGTH_LONG).show();
@@ -100,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
                     new getMovies().execute(formURL(state));
             }
             });
-            //OK if the internet option is turned off but does not handle timeouts
+
     }
 
     private boolean isNetworkAvailable() {
@@ -112,7 +132,6 @@ public class MainActivity extends AppCompatActivity {
 
     public URL formURL(String spinnerState){
         final String API_KEY = getResources().getString(R.string.theMovieDbKey);
-
         final String API_BASERating = getResources().getString(R.string.apiCallBaseRating);
         final String API_BASEPopularity = getResources().getString(R.string.apiCallBasePopularity);
 
@@ -130,6 +149,14 @@ public class MainActivity extends AppCompatActivity {
         }
         return url;
     }
+    public void clearList(){
+        mMyPosterList.clear();
+        mMyMovieReleaseList.clear();
+        mMyMovieOverviewList.clear();
+        mMyMovieVoteAverageList.clear();
+        mMyMovieTitleList.clear();
+        mMyMovieTrailerKeyList.clear();
+    }
 
     public class getMovies extends AsyncTask<URL, Void, String> {
         @Override
@@ -143,42 +170,38 @@ public class MainActivity extends AppCompatActivity {
         protected String doInBackground(URL... voids) {
             //https://api.themoviedb.org/3/discover/movie?api_key=<<api_key>>&language=en-US&sort_by=popularity.desc&include_adult=false&include_video=false&page=1
             //http://api.themoviedb.org/3/movie/157336/videos?api_key=###
+            String url_check = String.valueOf(voids[0]);
             try {
-                JSONObject moviesObj = jsonDataFromUrl(voids[0]);
-                JSONArray moviesArray = moviesObj.getJSONArray("results");
-                System.out.println(moviesObj);
-                final String API_KEY = getResources().getString(R.string.theMovieDbKey);
+                JSONArray moviesArray = null;
+                if (url_check != "skip") {
+                    JSONObject moviesObj = jsonDataFromUrl(voids[0]);
+                    moviesArray = moviesObj.getJSONArray("results");
+                    System.out.println(moviesObj);
+                    final String API_KEY = getResources().getString(R.string.theMovieDbKey);
 
+                    for (int i = 0; i < moviesArray.length(); ++i) {
+                        String PosterUrlSuffix = parseJsonData(moviesArray, "poster_path", i);
+                        String combined = new String("http://image.tmdb.org/t/p/w780/" + PosterUrlSuffix);
 
-                for (int i = 0; i < moviesArray.length(); ++i) {
-                    String PosterUrlSuffix = parseJsonData(moviesArray, "poster_path", i);
-                    String combined = new String("http://image.tmdb.org/t/p/w780/" + PosterUrlSuffix);
-
-                    mMyPosterList.add(combined);
-                    String myMovieReleaseDate = parseJsonData(moviesArray, "release_date", i);
-                    mMyMovieReleaseList.add(myMovieReleaseDate);
-                    String myMovieOverview = parseJsonData(moviesArray, "overview", i);
-                    mMyMovieOverviewList.add(myMovieOverview);
-                    String myMovieVoteAverage = parseJsonData(moviesArray, "vote_average", i);
-                    mMyMovieVoteAverageList.add(myMovieVoteAverage);
-                    String myMovieTitle = parseJsonData(moviesArray, "title", i);
-                    mMyMovieTitleList.add(myMovieTitle);
-                    String movieID = parseJsonData(moviesArray, "id", i);
-                    URL movieTrailers = new URL("http://api.themoviedb.org/3/movie/" + movieID + "/videos?api_key="+ API_KEY);
-                    JSONObject trailersObj = jsonDataFromUrl(movieTrailers);
-                    JSONArray trailersArrays = trailersObj.getJSONArray("results");
-                    String trailerKey = trailersArrays.getJSONObject(0).getString("key");
-                    mMyMovieTrailerKeyList.add(trailerKey);
-                    System.out.println(
-                            trailerKey
-                    );
-
-                    Boolean favoriteStatus = new Boolean("false");
-
-
-                    MovieDataEntry movie = new MovieDataEntry(movieID, combined, myMovieReleaseDate, myMovieOverview, myMovieVoteAverage, myMovieTitle, trailerKey, favoriteStatus );
-                    mdb.MovieDao().insertAll(movie);
-                    mdb.MovieDao().loadAllByFavorites(favoriteStatus);
+                        mMyPosterList.add(combined);
+                        String myMovieReleaseDate = parseJsonData(moviesArray, "release_date", i);
+                        mMyMovieReleaseList.add(myMovieReleaseDate);
+                        String myMovieOverview = parseJsonData(moviesArray, "overview", i);
+                        mMyMovieOverviewList.add(myMovieOverview);
+                        String myMovieVoteAverage = parseJsonData(moviesArray, "vote_average", i);
+                        mMyMovieVoteAverageList.add(myMovieVoteAverage);
+                        String myMovieTitle = parseJsonData(moviesArray, "title", i);
+                        mMyMovieTitleList.add(myMovieTitle);
+                        //Get the movie ID to use for the trailer URL
+                        String movieID = parseJsonData(moviesArray, "id", i);
+                        mMyMovieIds.add(movieID);
+                        //The API call returns lots of DATA but we only need the first youtube key
+                        URL movieTrailers = new URL("http://api.themoviedb.org/3/movie/" + movieID + "/videos?api_key=" + API_KEY);
+                        JSONObject trailersObj = jsonDataFromUrl(movieTrailers);
+                        JSONArray trailersArrays = trailersObj.getJSONArray("results");
+                        String trailerKey = trailersArrays.getJSONObject(0).getString("key");
+                        mMyMovieTrailerKeyList.add(trailerKey);
+                    }
 
                 }
             } catch (IOException e) {
@@ -227,8 +250,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-
-
         @Override
         protected void onPostExecute(String mMyposterList) {
 
@@ -253,6 +274,7 @@ public class MainActivity extends AppCompatActivity {
                     bundle.putString("MovieVoteAverage", mMyMovieVoteAverageList.get(position));
                     bundle.putString("MoviePoster", mMyPosterList.get(position));
                     bundle.putString("MovieTrailerKey", mMyMovieTrailerKeyList.get(position));
+                    bundle.putString("MovieID", mMyMovieIds.get(position));
                     toNextPage.putExtras(bundle);
                     startActivity(toNextPage);
                     Toast.makeText(MainActivity.this, "" + position,
@@ -262,6 +284,55 @@ public class MainActivity extends AppCompatActivity {
 
             mProgressBar.setVisibility(View.GONE);
             Log.i("INFO", mMyposterList);
+        }
+
+    }
+
+    public class getFavorites implements Executor {
+
+        public void queryDB(){
+            Toast.makeText(MainActivity.this, "OMG THAT WORKED!!!" ,
+                    Toast.LENGTH_LONG).show();
+            mdb = movieDatabase.getInstance(getApplicationContext());
+
+            Boolean favoriteStatus = new Boolean("true");
+            mdb.MovieDao().loadAllByFavorites(favoriteStatus);
+
+            GridView gridview = findViewById(R.id.gridview);
+
+            ArrayList<String> al = (ArrayList<String>) mMyPosterList;
+            //call the image adapter
+            gridview.setAdapter(new gridViewAdapter(getApplicationContext(), al));
+
+            //This seems like the wrong place to put this;
+            gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                public void onItemClick(AdapterView<?> parent, View v,
+                                        int position, long id) {
+                    Intent toNextPage = new Intent(MainActivity.this,
+                            DetailActivity.class);
+                    Bundle bundle = new Bundle();
+                    //I need to add some error checks for null objects
+                    bundle.putString("MovieRelease", mMyMovieReleaseList.get(position));
+                    bundle.putString("MovieTitle", mMyMovieTitleList.get(position));
+                    bundle.putString("MovieDescription", mMyMovieOverviewList.get(position));
+                    bundle.putString("MovieVoteAverage", mMyMovieVoteAverageList.get(position));
+                    bundle.putString("MoviePoster", mMyPosterList.get(position));
+                    bundle.putString("MovieTrailerKey", mMyMovieTrailerKeyList.get(position));
+                    toNextPage.putExtras(bundle);
+                    startActivity(toNextPage);
+                    Toast.makeText(MainActivity.this, "" + position,
+                            Toast.LENGTH_SHORT).show();
+                }
+            });
+
+        }
+
+        @Override
+        public void execute(@NonNull Runnable command) {
+            Toast.makeText(MainActivity.this, "OMG THAT WORKED!!!" ,
+                    Toast.LENGTH_LONG).show();
+            new Thread(command).start();
+
         }
     }
 }

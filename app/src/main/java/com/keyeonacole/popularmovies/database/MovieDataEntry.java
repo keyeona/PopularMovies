@@ -11,7 +11,7 @@ import android.support.annotation.NonNull;
 public class MovieDataEntry {
     @PrimaryKey(autoGenerate = true)
     private Long primaryKey;
-    @ColumnInfo(name = "primary_key")
+    @ColumnInfo(name = "movie_id")
     private String myMovieID;
     @ColumnInfo(name = "movie_poster_url")
     private String movieUrl;

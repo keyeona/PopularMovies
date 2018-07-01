@@ -11,7 +11,7 @@ import android.util.Log;
  * Created by keyeona on 6/20/18.
  */
 
-@Database(entities = {MovieDataEntry.class}, version = 2, exportSchema = false)
+@Database(entities = {MovieDataEntry.class}, version = 3, exportSchema = false)
 public abstract  class movieDatabase extends RoomDatabase{
     private static final String LOG_TAG = movieDatabase.class.getSimpleName();
     private  static final Object LOCK = new Object();
