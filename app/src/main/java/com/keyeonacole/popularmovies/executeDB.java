@@ -1,8 +1,6 @@
 package com.keyeonacole.popularmovies;
 
-import android.content.Context;
 import android.support.annotation.NonNull;
-import android.widget.Toast;
 
 import java.util.concurrent.Executor;
 
@@ -15,6 +13,7 @@ public class executeDB implements Executor{
     public void execute(@NonNull Runnable command) {
 
         new Thread(command).start();
+
 
     }
 }

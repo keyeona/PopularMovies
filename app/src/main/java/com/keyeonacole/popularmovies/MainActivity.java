@@ -87,28 +87,51 @@ public class MainActivity extends AppCompatActivity {
                              state = "popularity";
                              new getMovies().execute(formURL(state));
                         } else if (text == 2){
-                             state = "skip";
-                             Toast.makeText(MainActivity.this, "Prepare for failure!" ,
-                                     Toast.LENGTH_LONG).show();
-
-                             final Boolean favoriteStatus = new Boolean("true");
+                            clearList();
+                             mProgressBar = findViewById(R.id.progressBar);
+                             mProgressBar.setVisibility(View.VISIBLE);
                              mdb = movieDatabase.getInstance(getApplicationContext());
+
                              final Runnable r = new Runnable() {
                                  @Override
                                  public void run() {
-                                     //List<MovieDataEntry> test = mdb.MovieDao().loadAllByFavorites(favoriteStatus);
-                                     List<MovieDataEntry> test = mdb.MovieDao().getAll();
+                                     List<MovieDataEntry> favoriteMovies = mdb.MovieDao().getAll();
 
-                                     Integer fto = test.size();
-                                     //String fromDB = test.get(fto - 1).getMyMovieTitle();
-                                     System.out.println(fto);
+                                     Integer fto = favoriteMovies.size();
+                                     if (fto > 0){
+                                         for (int i = 0; i < fto ; ++i) {
+                                             String myMovieTitle = favoriteMovies.get(i).getMyMovieTitle();
+                                             mMyMovieTitleList.add(myMovieTitle);
 
+                                             String moviePoster = favoriteMovies.get(i).getMovieUrl();
+                                             mMyPosterList.add(moviePoster);
 
+                                             String myMovieReleaseDate = favoriteMovies.get(i).getMyMovieReleaseDate();
+                                             mMyMovieReleaseList.add(myMovieReleaseDate);
 
+                                             String myMovieOverview = favoriteMovies.get(i).getMyMovieOverview();
+                                             mMyMovieOverviewList.add(myMovieOverview);
+
+                                             String myMovieVoteAverage = favoriteMovies.get(i).getMyMovieVoteAverage();
+                                             mMyMovieVoteAverageList.add(myMovieVoteAverage);
+
+                                             String movieID = favoriteMovies.get(i).getMyMovieID();
+                                             mMyMovieIds.add(movieID);
+                                             System.out.println(movieID);
+
+                                             String trailerKey = favoriteMovies.get(i).getMyTrailer();
+                                             mMyMovieTrailerKeyList.add(trailerKey);
+
+                                         }
+
+                                     }
                                  }
                              };
                              new executeDB().execute(r);
-                             System.out.println();
+                             new getFavorites().favoritesUi();
+                             mProgressBar.setVisibility(View.GONE);
+
+
                          }
                     }else{
                         Toast.makeText(MainActivity.this, "Please Connect to the internet" ,
@@ -156,6 +179,7 @@ public class MainActivity extends AppCompatActivity {
         mMyMovieVoteAverageList.clear();
         mMyMovieTitleList.clear();
         mMyMovieTrailerKeyList.clear();
+        mMyMovieIds.clear();
     }
 
     public class getMovies extends AsyncTask<URL, Void, String> {
@@ -171,6 +195,7 @@ public class MainActivity extends AppCompatActivity {
             //https://api.themoviedb.org/3/discover/movie?api_key=<<api_key>>&language=en-US&sort_by=popularity.desc&include_adult=false&include_video=false&page=1
             //http://api.themoviedb.org/3/movie/157336/videos?api_key=###
             String url_check = String.valueOf(voids[0]);
+            System.out.println(url_check);
             try {
                 JSONArray moviesArray = null;
                 if (url_check != "skip") {
@@ -267,7 +292,6 @@ public class MainActivity extends AppCompatActivity {
                     Intent toNextPage = new Intent(MainActivity.this,
                             DetailActivity.class);
                     Bundle bundle = new Bundle();
-                    //I need to add some error checks for null objects
                     bundle.putString("MovieRelease", mMyMovieReleaseList.get(position));
                     bundle.putString("MovieTitle", mMyMovieTitleList.get(position));
                     bundle.putString("MovieDescription", mMyMovieOverviewList.get(position));
@@ -277,8 +301,7 @@ public class MainActivity extends AppCompatActivity {
                     bundle.putString("MovieID", mMyMovieIds.get(position));
                     toNextPage.putExtras(bundle);
                     startActivity(toNextPage);
-                    Toast.makeText(MainActivity.this, "" + position,
-                            Toast.LENGTH_SHORT).show();
+
                 }
             });
 
@@ -288,23 +311,19 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public class getFavorites implements Executor {
+    public class getFavorites {
 
-        public void queryDB(){
-            Toast.makeText(MainActivity.this, "OMG THAT WORKED!!!" ,
-                    Toast.LENGTH_LONG).show();
-            mdb = movieDatabase.getInstance(getApplicationContext());
 
-            Boolean favoriteStatus = new Boolean("true");
-            mdb.MovieDao().loadAllByFavorites(favoriteStatus);
+        protected void favoritesUi(){
+
+            System.out.println("OK We've made it this far!");
 
             GridView gridview = findViewById(R.id.gridview);
 
-            ArrayList<String> al = (ArrayList<String>) mMyPosterList;
+            ArrayList<String> favorites = (ArrayList<String>) mMyPosterList;
             //call the image adapter
-            gridview.setAdapter(new gridViewAdapter(getApplicationContext(), al));
+            gridview.setAdapter(new gridViewAdapter(getApplicationContext(), favorites));
 
-            //This seems like the wrong place to put this;
             gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 public void onItemClick(AdapterView<?> parent, View v,
                                         int position, long id) {
@@ -318,21 +337,12 @@ public class MainActivity extends AppCompatActivity {
                     bundle.putString("MovieVoteAverage", mMyMovieVoteAverageList.get(position));
                     bundle.putString("MoviePoster", mMyPosterList.get(position));
                     bundle.putString("MovieTrailerKey", mMyMovieTrailerKeyList.get(position));
+                    bundle.putString("MovieID", mMyMovieIds.get(position));
                     toNextPage.putExtras(bundle);
                     startActivity(toNextPage);
-                    Toast.makeText(MainActivity.this, "" + position,
-                            Toast.LENGTH_SHORT).show();
+
                 }
             });
-
-        }
-
-        @Override
-        public void execute(@NonNull Runnable command) {
-            Toast.makeText(MainActivity.this, "OMG THAT WORKED!!!" ,
-                    Toast.LENGTH_LONG).show();
-            new Thread(command).start();
-
         }
     }
 }

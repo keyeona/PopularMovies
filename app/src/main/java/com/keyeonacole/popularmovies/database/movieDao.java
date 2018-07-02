@@ -21,11 +21,17 @@ public interface movieDao {
     @Query("UPDATE movieTable set favorite = :status WHERE movie_id = :movieID ")
     void updateFavorite(Boolean status, String movieID);
 
+    @Query("SELECT favorite FROM movieTable WHERE movie_id = :movieID ")
+    Boolean currentMovieStatus(String movieID);
+
     @Insert
     void insertAll(MovieDataEntry... movieDataEntries);
 
-    @Delete
-    void delete(MovieDataEntry movieDataEntry);
+    @Query("DELETE FROM movieTable WHERE movie_id = :movieID")
+    void deleteFav(String movieID);
+
+    @Query("DELETE FROM movieTable")
+    void nukeTable();
 
     @Update
     void update(MovieDataEntry movieDataEntry);

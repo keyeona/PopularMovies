@@ -27,6 +27,7 @@ import org.w3c.dom.Text;
 
 import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executor;
 
 /**
@@ -41,8 +42,13 @@ class DetailActivity extends AppCompatActivity{
     private String mMyMovieVoteAverage = new String();
     private String mMyMovieTitle = new String();
     private String mMyMovieTrailerKey = new String();
+    private Boolean mMyFavorite;
+
 
     private movieDatabase mdb;
+
+    DetailActivity() {
+    }
 
 
     @Override
@@ -53,6 +59,8 @@ class DetailActivity extends AppCompatActivity{
         Intent dataIntent = getIntent();
         final Bundle dataBundle = dataIntent.getExtras();
         System.out.println(dataBundle);
+        mdb = movieDatabase.getInstance(getApplicationContext());
+
 
         //Should I perform valid checks here?
         mMyMovieID = dataBundle.getString("MovieID");
@@ -63,11 +71,18 @@ class DetailActivity extends AppCompatActivity{
         mMyMovieVoteAverage = dataBundle.getString("MovieVoteAverage");
         mMyMovieTrailerKey = dataBundle.getString("MovieTrailerKey");
 
+        final Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                 Boolean dbFavorite = mdb.MovieDao().currentMovieStatus(mMyMovieID);
+                 mMyFavorite = dbFavorite;
+            }
+        };
+        new executeDB().execute(r);
+
         populateUI(dataBundle);
         Switch switch_button =  this.findViewById(R.id.switch1);
         ImageButton play_button = this.findViewById(R.id.play_button);
-
-
 
         //https://android--code.blogspot.com/2015/08/android-switch-button-listener.html
         switch_button.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -77,7 +92,6 @@ class DetailActivity extends AppCompatActivity{
                     // If the switch button is on
                     System.out.println(isChecked);
                     Toast.makeText(DetailActivity.this, " Adding to Favorites", Toast.LENGTH_SHORT).show();
-                    mdb = movieDatabase.getInstance(getApplicationContext());
                     final Runnable r = new Runnable() {
                         @Override
                         public void run() {
@@ -86,19 +100,19 @@ class DetailActivity extends AppCompatActivity{
                         }
                     };
                     new executeDB().execute(r);
-
-
                 }
                 else {
                     System.out.println(isChecked);
                     Toast.makeText(DetailActivity.this, " Removed from Favorites", Toast.LENGTH_SHORT).show();
+                    mMyMovieID = dataBundle.getString("MovieID");
                     mdb = movieDatabase.getInstance(getApplicationContext());
                     final Runnable r = new Runnable() {
                         @Override
                         public void run() {
-                            MovieDataEntry deleteFav = new MovieDataEntry(mMyMovieID, mMyPoster, mMyMovieRelease, mMyMovieOverview, mMyMovieVoteAverage, mMyMovieTitle, mMyMovieTrailerKey, true);
-                            mdb.MovieDao().delete(deleteFav);
-                            mdb.MovieDao().updateFavorite(false, mMyMovieID);
+                            System.out.println(mMyMovieID);
+                            mdb.MovieDao().deleteFav(mMyMovieID);
+                            //mdb.MovieDao().nukeTable();
+
 
                         }
                     };
@@ -143,13 +157,17 @@ class DetailActivity extends AppCompatActivity{
             Boolean validPoster = dataBundle.containsKey("MoviePoster");
             if (validPoster){
                 Picasso.with(getApplicationContext()).load(mMyPoster).into((ImageView) findViewById(R.id.posterView));
+            }if (mMyFavorite != null){
+                Switch favoriteSW = findViewById(R.id.switch1);
+                favoriteSW.setChecked(true);
+            }else{
+                Switch favoriteSW = findViewById(R.id.switch1);
+                favoriteSW.setChecked(false);
+
             }
+
             //IF this movie is in DB set switch to ON else to OFF
             //MovieDataEntry fav = new MovieDataEntry(String myMovieID,String movieUrl, String myMovieReleaseDate, String myMovieOverview, String myMovieVoteAverage, String myMovieTitle, String myTrailer, Boolean myFavorite)
-
-
-
-
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
@@ -173,8 +191,6 @@ class DetailActivity extends AppCompatActivity{
         }
     }
 
-
-
     //https://stackoverflow.com/questions/36457564/display-back-button-of-action-bar-is-not-going-back-in-android
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -185,18 +201,5 @@ class DetailActivity extends AppCompatActivity{
         }
         return super.onOptionsItemSelected(item);
     }
-
-
-    public class getFavorites implements Executor {
-
-        @Override
-        public void execute(@NonNull Runnable command) {
-            Toast.makeText(DetailActivity.this, "OMG THAT WORKED!!!" ,
-                    Toast.LENGTH_LONG).show();
-            new Thread(command).start();
-
-        }
-    }
-
 }
 
