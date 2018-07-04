@@ -12,8 +12,6 @@
         android:background="@color/black">
 
 
-
-
         <ImageView
             android:id="@+id/posterView"
             android:layout_width="wrap_content"
@@ -23,6 +21,7 @@
             android:layout_marginStart="8dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
             tools:layout_editor_absoluteY="76dp" />
 
         <TextView
@@ -60,12 +59,12 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="left"
                 android:src="@android:drawable/ic_media_play"
-                tools:layout_editor_absoluteX="164dp"
-                tools:layout_editor_absoluteY="26dp"
                 app:layout_constraintBottom_toBottomOf="@+id/posterView"
                 app:layout_constraintLeft_toLeftOf="@+id/posterView"
                 app:layout_constraintRight_toRightOf="@+id/posterView"
-                app:layout_constraintTop_toTopOf="@+id/posterView"/>
+                app:layout_constraintTop_toTopOf="@+id/posterView"
+                tools:layout_editor_absoluteX="164dp"
+                tools:layout_editor_absoluteY="26dp" />
         </FrameLayout>
 
         <TextView
@@ -73,6 +72,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
+            android:layout_marginRight="8dp"
             android:layout_marginTop="8dp"
             android:background="@color/black"
             android:gravity="start"
@@ -92,7 +92,7 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:layout_marginStart="8dp"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="8dp"
             android:gravity="start"
             android:text="Description"
             android:textAlignment="viewStart"
@@ -101,12 +101,13 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.028"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/title" />
+            app:layout_constraintTop_toBottomOf="@+id/switch1" />
 
         <TextView
             android:id="@+id/rating"
             android:layout_width="41dp"
             android:layout_height="23dp"
+            android:layout_marginBottom="8dp"
             android:layout_marginEnd="8dp"
             android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
@@ -114,6 +115,7 @@
             android:text="Rating"
             android:textAlignment="viewStart"
             android:textColor="@android:color/white"
+            app:layout_constraintBottom_toTopOf="@+id/reviewLabel"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.024"
             app:layout_constraintStart_toStartOf="parent"
@@ -125,7 +127,7 @@
             android:layout_height="23dp"
             android:layout_marginEnd="8dp"
             android:layout_marginStart="8dp"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="8dp"
             android:text="Rating"
             android:textAlignment="center"
             android:textColor="@android:color/white"
@@ -133,7 +135,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.025"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/description" />
+            app:layout_constraintTop_toBottomOf="@+id/releaseDate" />
 
         <TextView
             android:id="@+id/releaseDate"
@@ -154,32 +156,62 @@
             android:id="@+id/releaseDate2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="116dp"
             android:layout_marginEnd="8dp"
             android:layout_marginStart="8dp"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="8dp"
             android:text="Release Date"
             android:textAlignment="center"
             android:textColor="@android:color/white"
             android:textSize="18sp"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.03"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/rating"
-            app:layout_constraintVertical_bias="1.0" />
+            app:layout_constraintTop_toBottomOf="@+id/description" />
 
         <Switch
             android:id="@+id/switch1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="8dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="24dp"
             android:text="Add to favorites"
             android:textAlignment="center"
             android:textColor="@color/white"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.035"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/releaseDate" />
+            app:layout_constraintTop_toBottomOf="@id/title" />
+
+        <TextView
+            android:id="@+id/reviewLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:text="Reviews"
+            android:textColor="@color/white"
+            app:layout_constraintBottom_toTopOf="@id/Reviews"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.025"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/rating" />
+
+
+        <ExpandableListView
+            android:id="@+id/Reviews"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginStart="16dp"
+            android:text="@string/sampleReview"
+            android:textColor="@color/white"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/reviewLabel" />
 
 
     </android.support.constraint.ConstraintLayout>

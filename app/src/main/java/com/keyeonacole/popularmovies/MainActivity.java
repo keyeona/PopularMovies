@@ -46,9 +46,6 @@ public class MainActivity extends AppCompatActivity {
 
     private movieDatabase mdb;
 
-
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -75,9 +72,10 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+                    final String noConnection = getResources().getString(R.string.noInternetConnection);
+
                     if (isNetworkAvailable()){
                         Integer text = spinner.getSelectedItemPosition();
-                        System.out.println(text);
                          if (text == 0 ){
                              clearList();
                              state = "rating";
@@ -95,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
                              final Runnable r = new Runnable() {
                                  @Override
                                  public void run() {
-                                     List<MovieDataEntry> favoriteMovies = mdb.MovieDao().getAll();
+                                     List<MovieDataEntry> favoriteMovies = (List<MovieDataEntry>) mdb.MovieDao().getAll();
 
                                      Integer fto = favoriteMovies.size();
                                      if (fto > 0){
@@ -117,7 +115,6 @@ public class MainActivity extends AppCompatActivity {
 
                                              String movieID = favoriteMovies.get(i).getMyMovieID();
                                              mMyMovieIds.add(movieID);
-                                             System.out.println(movieID);
 
                                              String trailerKey = favoriteMovies.get(i).getMyTrailer();
                                              mMyMovieTrailerKeyList.add(trailerKey);
@@ -134,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
 
                          }
                     }else{
-                        Toast.makeText(MainActivity.this, "Please Connect to the internet" ,
+                        Toast.makeText(MainActivity.this, noConnection ,
                                 Toast.LENGTH_LONG).show();
                     }
              }
@@ -155,17 +152,16 @@ public class MainActivity extends AppCompatActivity {
 
     public URL formURL(String spinnerState){
         final String API_KEY = getResources().getString(R.string.theMovieDbKey);
-        final String API_BASERating = getResources().getString(R.string.apiCallBaseRating);
-        final String API_BASEPopularity = getResources().getString(R.string.apiCallBasePopularity);
+        final String API_BASE = getResources().getString(R.string.apiBase);
+        final String API_Rating = getResources().getString(R.string.Rating);
+        final String API_Popularity = getResources().getString(R.string.Popularity);
 
-
-        System.out.println(spinnerState);
         URL url = null;
         try {
             if (spinnerState == "popularity"){
-                url = new URL(API_BASEPopularity + "api_key=" + API_KEY + "&language=en-US&page=1");
+                url = new URL(API_BASE + API_Popularity + "api_key=" + API_KEY + "&language=en-US&page=1");
             }else if (spinnerState == "rating"){
-                url = new URL(API_BASERating + "api_key=" + API_KEY + "&language=en-US&page=1");
+                url = new URL(API_BASE + API_Rating + "api_key=" + API_KEY + "&language=en-US&page=1");
             }
         } catch (MalformedURLException e) {
             e.printStackTrace();
@@ -194,38 +190,42 @@ public class MainActivity extends AppCompatActivity {
         protected String doInBackground(URL... voids) {
             //https://api.themoviedb.org/3/discover/movie?api_key=<<api_key>>&language=en-US&sort_by=popularity.desc&include_adult=false&include_video=false&page=1
             //http://api.themoviedb.org/3/movie/157336/videos?api_key=###
+            final String API_BASE= getResources().getString(R.string.apiBase);
+            final String noReviews = getResources().getString(R.string.noAvailableReview);
+
+
+
             String url_check = String.valueOf(voids[0]);
-            System.out.println(url_check);
             try {
                 JSONArray moviesArray = null;
                 if (url_check != "skip") {
-                    JSONObject moviesObj = jsonDataFromUrl(voids[0]);
+                    JSONObject moviesObj = jsonInteractions.DataFromUrl(voids[0]);
                     moviesArray = moviesObj.getJSONArray("results");
-                    System.out.println(moviesObj);
                     final String API_KEY = getResources().getString(R.string.theMovieDbKey);
 
                     for (int i = 0; i < moviesArray.length(); ++i) {
-                        String PosterUrlSuffix = parseJsonData(moviesArray, "poster_path", i);
+                        String PosterUrlSuffix = jsonInteractions.parseData(moviesArray, "poster_path", i);
                         String combined = new String("http://image.tmdb.org/t/p/w780/" + PosterUrlSuffix);
 
                         mMyPosterList.add(combined);
-                        String myMovieReleaseDate = parseJsonData(moviesArray, "release_date", i);
+                        String myMovieReleaseDate = jsonInteractions.parseData(moviesArray, "release_date", i);
                         mMyMovieReleaseList.add(myMovieReleaseDate);
-                        String myMovieOverview = parseJsonData(moviesArray, "overview", i);
+                        String myMovieOverview = jsonInteractions.parseData(moviesArray, "overview", i);
                         mMyMovieOverviewList.add(myMovieOverview);
-                        String myMovieVoteAverage = parseJsonData(moviesArray, "vote_average", i);
+                        String myMovieVoteAverage = jsonInteractions.parseData(moviesArray, "vote_average", i);
                         mMyMovieVoteAverageList.add(myMovieVoteAverage);
-                        String myMovieTitle = parseJsonData(moviesArray, "title", i);
+                        String myMovieTitle =jsonInteractions.parseData(moviesArray, "title", i);
                         mMyMovieTitleList.add(myMovieTitle);
                         //Get the movie ID to use for the trailer URL
-                        String movieID = parseJsonData(moviesArray, "id", i);
+                        String movieID = jsonInteractions.parseData(moviesArray, "id", i);
                         mMyMovieIds.add(movieID);
                         //The API call returns lots of DATA but we only need the first youtube key
-                        URL movieTrailers = new URL("http://api.themoviedb.org/3/movie/" + movieID + "/videos?api_key=" + API_KEY);
-                        JSONObject trailersObj = jsonDataFromUrl(movieTrailers);
+                        URL movieTrailers = new URL(API_BASE + movieID + "/videos?api_key=" + API_KEY);
+                        JSONObject trailersObj = jsonInteractions.DataFromUrl(movieTrailers);
                         JSONArray trailersArrays = trailersObj.getJSONArray("results");
                         String trailerKey = trailersArrays.getJSONObject(0).getString("key");
                         mMyMovieTrailerKeyList.add(trailerKey);
+
                     }
 
                 }
@@ -236,44 +236,6 @@ public class MainActivity extends AppCompatActivity {
             }
             return String.valueOf(mMyPosterList);
         }
-
-
-        public JSONObject jsonDataFromUrl(URL movieCall) throws IOException, JSONException {
-            try {
-                URL apiCall = movieCall;
-                HttpURLConnection urlConnection = (HttpURLConnection) apiCall.openConnection();
-                urlConnection.setRequestMethod("GET");
-                urlConnection.connect();
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
-                StringBuilder stringBuilder = new StringBuilder();
-                String line;
-                while ((line = bufferedReader.readLine()) != null) {
-                    stringBuilder.append(line).append("\n");
-                }
-                bufferedReader.close();
-                String jsonData = stringBuilder.toString();
-                urlConnection.disconnect();
-                return new JSONObject(jsonData);
-            } catch (IOException e) {
-                Log.e("ERROR", e.getMessage(), e);
-                return null;
-            }
-        }
-
-        public String parseJsonData(JSONArray jsonData, String filter, Integer i) {
-            if (jsonData != null) {
-                try {
-                    JSONObject movieDataOBJ = jsonData.getJSONObject(i);
-                    String movieData = movieDataOBJ.getString(filter);
-                    System.out.println(movieData);
-                    return movieData;
-                } catch (JSONException e) {
-                    Log.e("JSON Exception", e.getMessage(), e);
-                }
-            }
-            return null;
-        }
-
 
         @Override
         protected void onPostExecute(String mMyposterList) {
@@ -315,8 +277,6 @@ public class MainActivity extends AppCompatActivity {
 
 
         protected void favoritesUi(){
-
-            System.out.println("OK We've made it this far!");
 
             GridView gridview = findViewById(R.id.gridview);
 

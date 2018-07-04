@@ -1,5 +1,6 @@
 package com.keyeonacole.popularmovies.database;
 
+import android.arch.lifecycle.LiveData;
 import android.arch.persistence.room.Dao;
 import android.arch.persistence.room.Delete;
 import android.arch.persistence.room.Insert;
@@ -13,16 +14,16 @@ import java.util.List;
 @Dao
 public interface movieDao {
     @Query("SELECT * FROM movieTable")
-    List<MovieDataEntry> getAll();
+    LiveData<List<MovieDataEntry>> getAll();
 
     @Query("SELECT * FROM movieTable WHERE favorite LIKE :status")
-    List<MovieDataEntry> loadAllByFavorites(Boolean status);
+    LiveData<List<MovieDataEntry>> loadAllByFavorites(Boolean status);
 
     @Query("UPDATE movieTable set favorite = :status WHERE movie_id = :movieID ")
     void updateFavorite(Boolean status, String movieID);
 
     @Query("SELECT favorite FROM movieTable WHERE movie_id = :movieID ")
-    Boolean currentMovieStatus(String movieID);
+    LiveData<Boolean> currentMovieStatus(String movieID);
 
     @Insert
     void insertAll(MovieDataEntry... movieDataEntries);

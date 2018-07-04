@@ -1,18 +1,15 @@
 package com.keyeonacole.popularmovies;
 
+import android.arch.lifecycle.LiveData;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.CompoundButton;
-import android.widget.GridView;
+import android.widget.ExpandableListView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Switch;
@@ -23,12 +20,15 @@ import com.keyeonacole.popularmovies.database.MovieDataEntry;
 import com.keyeonacole.popularmovies.database.movieDatabase;
 import com.squareup.picasso.Picasso;
 
-import org.w3c.dom.Text;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-import java.security.PublicKey;
+import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.Executor;
 
 /**
  * Created by keyeona on 5/13/18.
@@ -42,23 +42,29 @@ class DetailActivity extends AppCompatActivity{
     private String mMyMovieVoteAverage = new String();
     private String mMyMovieTitle = new String();
     private String mMyMovieTrailerKey = new String();
-    private Boolean mMyFavorite;
 
+    private LiveData<Boolean> mMyFavorite;
 
     private movieDatabase mdb;
 
+    private expandableListViewAdapter reviewsListViewAdapter;
+    private List<String> listDataHeader = new ArrayList<>();
+    private List<List<String>> listDataItem = new ArrayList<List<String>>();
+    private HashMap<String,List<String>> listHashMap = new HashMap<>();
+
+
+
     DetailActivity() {
+
     }
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-
         super.onCreate(savedInstanceState);
         Intent dataIntent = getIntent();
         final Bundle dataBundle = dataIntent.getExtras();
-        System.out.println(dataBundle);
         mdb = movieDatabase.getInstance(getApplicationContext());
 
 
@@ -74,11 +80,12 @@ class DetailActivity extends AppCompatActivity{
         final Runnable r = new Runnable() {
             @Override
             public void run() {
-                 Boolean dbFavorite = mdb.MovieDao().currentMovieStatus(mMyMovieID);
+                 LiveData<Boolean> dbFavorite = mdb.MovieDao().currentMovieStatus(mMyMovieID);
                  mMyFavorite = dbFavorite;
             }
         };
         new executeDB().execute(r);
+        //System.out.println("Favorite from db is returning: " + mMyFavorite);
 
         populateUI(dataBundle);
         Switch switch_button =  this.findViewById(R.id.switch1);
@@ -90,7 +97,7 @@ class DetailActivity extends AppCompatActivity{
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if(isChecked){
                     // If the switch button is on
-                    System.out.println(isChecked);
+                    //System.out.println(isChecked);
                     Toast.makeText(DetailActivity.this, " Adding to Favorites", Toast.LENGTH_SHORT).show();
                     final Runnable r = new Runnable() {
                         @Override
@@ -102,8 +109,7 @@ class DetailActivity extends AppCompatActivity{
                     new executeDB().execute(r);
                 }
                 else {
-                    System.out.println(isChecked);
-                    Toast.makeText(DetailActivity.this, " Removed from Favorites", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(DetailActivity.this, "Removed from Favorites", Toast.LENGTH_SHORT).show();
                     mMyMovieID = dataBundle.getString("MovieID");
                     mdb = movieDatabase.getInstance(getApplicationContext());
                     final Runnable r = new Runnable() {
@@ -120,6 +126,8 @@ class DetailActivity extends AppCompatActivity{
                 }
             }
         });
+        //The API call return Reviews for a movie
+        new getReview().execute();
 
         play_button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -129,10 +137,14 @@ class DetailActivity extends AppCompatActivity{
         });
     }
 
+
+
     //the request to you tube using the key http://youtube.com/watch?v=YOUTUBE_KEY
     public void populateUI(Bundle dataBundle){
 
-        if(dataBundle!= null){
+
+
+        if(dataBundle != null){
             setContentView(R.layout.detail_view);
             Boolean validTitle = dataBundle.containsKey("MovieTitle");
             if (validTitle){
@@ -180,7 +192,6 @@ class DetailActivity extends AppCompatActivity{
             if (validMovieTrailerKey){
                 String youtubeKey = dataBundle.getString("MovieTrailerKey");
               Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=" + youtubeKey));
-              System.out.println(intent);
               intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
               intent.setPackage("com.google.android.youtube");
                 startActivity(intent);
@@ -200,6 +211,116 @@ class DetailActivity extends AppCompatActivity{
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    public class getReview extends AsyncTask<URL, Void, String> implements ExpandableListView.OnGroupExpandListener, ExpandableListView.OnGroupCollapseListener, ExpandableListView.OnChildClickListener {
+
+        @Override
+        protected String doInBackground(URL... urls) {
+            final String API_KEY = getResources().getString(R.string.theMovieDbKey);
+            final String API_BASE= getResources().getString(R.string.apiBase);
+            final String noReviews = getResources().getString(R.string.noAvailableReview);
+            listHashMap.clear();
+            listDataHeader.clear();
+            listDataItem.clear();
+
+            ExpandableListView expandableListView = findViewById(R.id.Reviews);
+            expandableListView.setOnGroupExpandListener(this);
+            expandableListView.setOnGroupCollapseListener(this);
+            expandableListView.setOnChildClickListener(this);
+
+            JSONObject reviewObj = null;
+            try {
+                URL movieReviewUrl = new URL(API_BASE + mMyMovieID + "/reviews?api_key=" + API_KEY);
+                reviewObj = jsonInteractions.DataFromUrl(movieReviewUrl);
+                JSONArray reviewArray = reviewObj.getJSONArray("results");
+
+
+                listDataHeader.add("Level 1");
+                listDataHeader.add("Level 2");
+                listDataHeader.add("Level 3");
+                listDataHeader.add("Level 4");
+
+                 List<String> eachList1 = new ArrayList<>();
+                 eachList1.add("This is entry 1 for eachlist1");
+                 eachList1.add("This is entry 2 for eachlist1");
+                 eachList1.add("This is entry 3 for eachlist1");
+                 eachList1.add("This is entry 4 for eachlist1");
+                 eachList1.add("This is entry 5 for eachlist1");
+
+                 List<String> eachList2 = new ArrayList<>();
+                eachList1.add("This is entry 1 for eachlist2");
+                eachList1.add("This is entry 2 for eachlist2");
+                eachList1.add("This is entry 3 for eachlist2");
+                eachList1.add("This is entry 4 for eachlist2");
+                eachList1.add("This is entry 5 for eachlist2");
+
+                 List<String> eachList3 = new ArrayList<>();
+                eachList1.add("This is entry 1 for eachlist3");
+                eachList1.add("This is entry 2 for eachlist3");
+                eachList1.add("This is entry 3 for eachlist3");
+                eachList1.add("This is entry 4 for eachlist3");
+                eachList1.add("This is entry 5 for eachlist3");
+
+                 List<String> eachList4 = new ArrayList<>();
+                eachList1.add("This is entry 1 for eachlist4");
+                eachList1.add("This is entry 2 for eachlist4");
+                eachList1.add("This is entry 3 for eachlist4");
+                eachList1.add("This is entry 4 for eachlist4");
+                eachList1.add("This is entry 5 for eachlist4");
+
+                listHashMap.put(listDataHeader.get(0), eachList1);
+                listHashMap.put(listDataHeader.get(1), eachList2);
+                listHashMap.put(listDataHeader.get(2), eachList3);
+                listHashMap.put(listDataHeader.get(3), eachList4);
+
+
+
+
+                //if (reviewArray.length() < 1){
+                //    reviewArray.put(0, noReviews);
+                //}else{
+                //    for (int i = 0; i < reviewArray.length() && i < 6 ; ++i) {
+                //        eachList.clear();
+                //        String authorName = reviewArray.getJSONObject(i).getString("author");
+                //        String reviewContent = reviewArray.getJSONObject(i).getString("content");
+                //        eachList.add(reviewContent);
+                //        listDataItem.add(eachList);
+                //        listDataHeader.add(authorName);
+                //        listHashMap.put(listDataHeader.get(i),listDataItem.get(i));
+                //    }
+                //
+                //}
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            reviewsListViewAdapter = new expandableListViewAdapter(DetailActivity.this,listDataHeader,listHashMap);
+            expandableListView.setAdapter(reviewsListViewAdapter);
+            return null;
+        }
+
+        @Override
+        public void onGroupExpand(int groupPosition) {
+            Toast.makeText(getApplicationContext(), listDataHeader.get(groupPosition) + "List Expanded.",Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void onGroupCollapse(int groupPosition) {
+            Toast.makeText(getApplicationContext(),
+                    listDataHeader.get(groupPosition) + "List Collapsed.", Toast.LENGTH_SHORT).show();
+        }
+
+
+        @Override
+        public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
+            Toast.makeText(getApplicationContext(), listDataHeader.get(groupPosition) + " ->"
+            + listHashMap.get(listDataHeader.get(groupPosition)).get(childPosition), Toast.LENGTH_SHORT).show();
+            return false;
+        }
     }
 }
 

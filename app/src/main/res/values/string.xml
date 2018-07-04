@@ -2,8 +2,13 @@
     <string name="app_name">Popular Movies</string>
     <!-- TODO 1: Put your API key  in the string theMovieDbKey -->
     <string name="theMovieDbKey">YOUR_KEY_HERE</string>
-    <string name="apiCallBasePopularity">https://api.themoviedb.org/3/movie/popular?</string>
-    <string name="apiCallBaseRating">https://api.themoviedb.org/3/movie/top_rated?</string>
+    <string name="apiBase">https://api.themoviedb.org/3/movie/</string>
+    <string name="Popularity">popular?</string>
+    <string name="Rating">top_rated?</string>
+
+    <string name="noAvailableReview">No Reviews Available</string>
+    <string name="noInternetConnection">Please connect to the internet</string>
+
 
     <string name="trailer_base"></string>
 
@@ -13,6 +18,8 @@
         <item>Most Popular </item>
         <item>Favorites </item>
     </string-array>
+
+    <string name="sampleReview">Now. Is Java smart enough to skip checking bool2 and bool2 if bool1 was evaluated to false? Does java even check them from left to right? I\'m asking this because i was "sorting" the conditions inside my if\'s by the time it takes to do them (starting with the cheapest ones on the left). Now I\'m not sure if this gives me any performance benefits because i don\'t know how Java handles this.</string>
 
 
 </resources>
