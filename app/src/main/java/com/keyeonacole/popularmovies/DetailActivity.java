@@ -1,10 +1,12 @@
 package com.keyeonacole.popularmovies;
 
 import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.Observer;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.view.View;
@@ -43,13 +45,13 @@ class DetailActivity extends AppCompatActivity{
     private String mMyMovieTitle = new String();
     private String mMyMovieTrailerKey = new String();
 
-    private LiveData<Boolean> mMyFavorite;
+    private Boolean mMyFavorite;
 
     private movieDatabase mdb;
 
     private expandableListViewAdapter reviewsListViewAdapter;
     private List<String> listDataHeader = new ArrayList<>();
-    private List<List<String>> listDataItem = new ArrayList<List<String>>();
+    private List<String> listDataItem = new ArrayList<String>();
     private HashMap<String,List<String>> listHashMap = new HashMap<>();
 
 
@@ -80,7 +82,7 @@ class DetailActivity extends AppCompatActivity{
         final Runnable r = new Runnable() {
             @Override
             public void run() {
-                 LiveData<Boolean> dbFavorite = mdb.MovieDao().currentMovieStatus(mMyMovieID);
+                 Boolean dbFavorite = mdb.MovieDao().currentMovieStatus(mMyMovieID);
                  mMyFavorite = dbFavorite;
             }
         };
@@ -137,12 +139,8 @@ class DetailActivity extends AppCompatActivity{
         });
     }
 
-
-
     //the request to you tube using the key http://youtube.com/watch?v=YOUTUBE_KEY
     public void populateUI(Bundle dataBundle){
-
-
 
         if(dataBundle != null){
             setContentView(R.layout.detail_view);
@@ -177,9 +175,7 @@ class DetailActivity extends AppCompatActivity{
                 favoriteSW.setChecked(false);
 
             }
-
             //IF this movie is in DB set switch to ON else to OFF
-            //MovieDataEntry fav = new MovieDataEntry(String myMovieID,String movieUrl, String myMovieReleaseDate, String myMovieOverview, String myMovieVoteAverage, String myMovieTitle, String myTrailer, Boolean myFavorite)
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
@@ -193,7 +189,6 @@ class DetailActivity extends AppCompatActivity{
                 String youtubeKey = dataBundle.getString("MovieTrailerKey");
               Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=" + youtubeKey));
               intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-              intent.setPackage("com.google.android.youtube");
                 startActivity(intent);
         }
 
@@ -207,7 +202,16 @@ class DetailActivity extends AppCompatActivity{
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case android.R.id.home:
+                LiveData<List<MovieDataEntry>> favoriteMovies = (LiveData<List<MovieDataEntry>>) mdb.MovieDao().getAll();
+                favoriteMovies.observe(DetailActivity.this, new Observer<List<MovieDataEntry>>() {
+                    @Override
+                    public void onChanged(@Nullable List<MovieDataEntry> movieDataEntries) {
+
+                    }
+                });
+
                 onBackPressed();
+
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -234,70 +238,30 @@ class DetailActivity extends AppCompatActivity{
                 URL movieReviewUrl = new URL(API_BASE + mMyMovieID + "/reviews?api_key=" + API_KEY);
                 reviewObj = jsonInteractions.DataFromUrl(movieReviewUrl);
                 JSONArray reviewArray = reviewObj.getJSONArray("results");
+                List<String> eachList = new ArrayList<>();
+                if (reviewArray.length() < 1){
+                    reviewArray.put(0, noReviews);
+                }else{
+                    for (int i = 0; i < reviewArray.length() && i < 6 ; ++i) {
+                        String authorName = reviewArray.getJSONObject(i).getString("author");
+                        String reviewContent = reviewArray.getJSONObject(i).getString("content");
+                        listDataItem.add(reviewContent);
+                        listDataHeader.add(authorName);
+                    }
 
-
-                listDataHeader.add("Level 1");
-                listDataHeader.add("Level 2");
-                listDataHeader.add("Level 3");
-                listDataHeader.add("Level 4");
-
-                 List<String> eachList1 = new ArrayList<>();
-                 eachList1.add("This is entry 1 for eachlist1");
-                 eachList1.add("This is entry 2 for eachlist1");
-                 eachList1.add("This is entry 3 for eachlist1");
-                 eachList1.add("This is entry 4 for eachlist1");
-                 eachList1.add("This is entry 5 for eachlist1");
-
-                 List<String> eachList2 = new ArrayList<>();
-                eachList1.add("This is entry 1 for eachlist2");
-                eachList1.add("This is entry 2 for eachlist2");
-                eachList1.add("This is entry 3 for eachlist2");
-                eachList1.add("This is entry 4 for eachlist2");
-                eachList1.add("This is entry 5 for eachlist2");
-
-                 List<String> eachList3 = new ArrayList<>();
-                eachList1.add("This is entry 1 for eachlist3");
-                eachList1.add("This is entry 2 for eachlist3");
-                eachList1.add("This is entry 3 for eachlist3");
-                eachList1.add("This is entry 4 for eachlist3");
-                eachList1.add("This is entry 5 for eachlist3");
-
-                 List<String> eachList4 = new ArrayList<>();
-                eachList1.add("This is entry 1 for eachlist4");
-                eachList1.add("This is entry 2 for eachlist4");
-                eachList1.add("This is entry 3 for eachlist4");
-                eachList1.add("This is entry 4 for eachlist4");
-                eachList1.add("This is entry 5 for eachlist4");
-
-                listHashMap.put(listDataHeader.get(0), eachList1);
-                listHashMap.put(listDataHeader.get(1), eachList2);
-                listHashMap.put(listDataHeader.get(2), eachList3);
-                listHashMap.put(listDataHeader.get(3), eachList4);
-
-
-
-
-                //if (reviewArray.length() < 1){
-                //    reviewArray.put(0, noReviews);
-                //}else{
-                //    for (int i = 0; i < reviewArray.length() && i < 6 ; ++i) {
-                //        eachList.clear();
-                //        String authorName = reviewArray.getJSONObject(i).getString("author");
-                //        String reviewContent = reviewArray.getJSONObject(i).getString("content");
-                //        eachList.add(reviewContent);
-                //        listDataItem.add(eachList);
-                //        listDataHeader.add(authorName);
-                //        listHashMap.put(listDataHeader.get(i),listDataItem.get(i));
-                //    }
-                //
-                //}
+                }
 
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-
+            for(int i = 0; i < listDataHeader.size(); ++i){
+                 List<String> eachList = new ArrayList<>();
+                 eachList.add(listDataItem.get(i));
+                 System.out.println(listDataItem.get(i));
+                 listHashMap.put(listDataHeader.get(i), eachList);
+            }
             reviewsListViewAdapter = new expandableListViewAdapter(DetailActivity.this,listDataHeader,listHashMap);
             expandableListView.setAdapter(reviewsListViewAdapter);
             return null;
@@ -314,11 +278,10 @@ class DetailActivity extends AppCompatActivity{
                     listDataHeader.get(groupPosition) + "List Collapsed.", Toast.LENGTH_SHORT).show();
         }
 
-
         @Override
         public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
-            Toast.makeText(getApplicationContext(), listDataHeader.get(groupPosition) + " ->"
-            + listHashMap.get(listDataHeader.get(groupPosition)).get(childPosition), Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), listDataHeader.get(groupPosition) + " -> "
+            + listHashMap.get(listDataHeader.get(groupPosition)).get(childPosition), Toast.LENGTH_LONG).show();
             return false;
         }
     }

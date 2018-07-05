@@ -23,7 +23,7 @@ public interface movieDao {
     void updateFavorite(Boolean status, String movieID);
 
     @Query("SELECT favorite FROM movieTable WHERE movie_id = :movieID ")
-    LiveData<Boolean> currentMovieStatus(String movieID);
+    Boolean currentMovieStatus(String movieID);
 
     @Insert
     void insertAll(MovieDataEntry... movieDataEntries);

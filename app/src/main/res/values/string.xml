@@ -19,7 +19,13 @@
         <item>Favorites </item>
     </string-array>
 
-    <string name="sampleReview">Now. Is Java smart enough to skip checking bool2 and bool2 if bool1 was evaluated to false? Does java even check them from left to right? I\'m asking this because i was "sorting" the conditions inside my if\'s by the time it takes to do them (starting with the cheapest ones on the left). Now I\'m not sure if this gives me any performance benefits because i don\'t know how Java handles this.</string>
+    <string name="sampleReview">Now. Is Java smart enough to skip checking bool2 and bool2 if bool1 was evaluated to false? Does java even check them from left to right? I\'m asking this because i was "sorting" the conditions inside my if\'s by the time it takes to do them (starting with the cheapest ones on the left). Now I\'m not sure if this gives me any performance benefits because i don/'t know how Java handles this.</string>
+
+    <string name="stateOptionRating">rating</string>
+    <string name="stateOptionPopularity">popularity</string>
+    <string name="stateOptionSkip">skip</string>
+
+
 
 
 </resources>

@@ -37,12 +37,12 @@ public class expandableListViewAdapter extends BaseExpandableListAdapter {
 
     @Override
     public Object getGroup(int groupPosition) {
-        return ListDataHeader.get(groupPosition);
+        return this.ListDataHeader.get(groupPosition);
     }
 
     @Override
     public Object getChild(int groupPosition, int childPosition) {
-        return listHashMap.get(ListDataHeader.get(groupPosition)).get(childPosition);
+        return this.listHashMap.get(ListDataHeader.get(groupPosition)).get(childPosition);
     }
 
     @Override
@@ -93,7 +93,7 @@ public class expandableListViewAdapter extends BaseExpandableListAdapter {
 
     @Override
     public boolean isChildSelectable(int groupPosition, int childPosition) {
-        return false;
+        return true;
     }
 }
 

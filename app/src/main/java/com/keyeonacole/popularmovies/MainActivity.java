@@ -1,11 +1,13 @@
 package com.keyeonacole.popularmovies;
 
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.Observer;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
-import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -23,15 +25,11 @@ import com.keyeonacole.popularmovies.database.movieDatabase;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executor;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -90,45 +88,45 @@ public class MainActivity extends AppCompatActivity {
                              mProgressBar.setVisibility(View.VISIBLE);
                              mdb = movieDatabase.getInstance(getApplicationContext());
 
-                             final Runnable r = new Runnable() {
+                             LiveData<List<MovieDataEntry>> favoriteMovies = (LiveData<List<MovieDataEntry>>) mdb.MovieDao().getAll();
+                             favoriteMovies.observe(MainActivity.this, new Observer<List<MovieDataEntry>>() {
                                  @Override
-                                 public void run() {
-                                     List<MovieDataEntry> favoriteMovies = (List<MovieDataEntry>) mdb.MovieDao().getAll();
+                                 public void onChanged(@Nullable List<MovieDataEntry> movieDataEntries) {
+                                     if(spinner.getSelectedItemPosition() == 2) {
+                                         clearList();
 
-                                     Integer fto = favoriteMovies.size();
+                                     Integer fto = movieDataEntries.size();
                                      if (fto > 0){
                                          for (int i = 0; i < fto ; ++i) {
-                                             String myMovieTitle = favoriteMovies.get(i).getMyMovieTitle();
+                                             String myMovieTitle = movieDataEntries.get(i).getMyMovieTitle();
                                              mMyMovieTitleList.add(myMovieTitle);
 
-                                             String moviePoster = favoriteMovies.get(i).getMovieUrl();
+                                             String moviePoster = movieDataEntries.get(i).getMovieUrl();
                                              mMyPosterList.add(moviePoster);
 
-                                             String myMovieReleaseDate = favoriteMovies.get(i).getMyMovieReleaseDate();
+                                             String myMovieReleaseDate = movieDataEntries.get(i).getMyMovieReleaseDate();
                                              mMyMovieReleaseList.add(myMovieReleaseDate);
 
-                                             String myMovieOverview = favoriteMovies.get(i).getMyMovieOverview();
+                                             String myMovieOverview = movieDataEntries.get(i).getMyMovieOverview();
                                              mMyMovieOverviewList.add(myMovieOverview);
 
-                                             String myMovieVoteAverage = favoriteMovies.get(i).getMyMovieVoteAverage();
+                                             String myMovieVoteAverage = movieDataEntries.get(i).getMyMovieVoteAverage();
                                              mMyMovieVoteAverageList.add(myMovieVoteAverage);
 
-                                             String movieID = favoriteMovies.get(i).getMyMovieID();
+                                             String movieID = movieDataEntries.get(i).getMyMovieID();
                                              mMyMovieIds.add(movieID);
 
-                                             String trailerKey = favoriteMovies.get(i).getMyTrailer();
+                                             String trailerKey = movieDataEntries.get(i).getMyTrailer();
                                              mMyMovieTrailerKeyList.add(trailerKey);
-
                                          }
 
+                                         }
                                      }
+                                     new getFavorites().favoritesUi();
+
                                  }
-                             };
-                             new executeDB().execute(r);
-                             new getFavorites().favoritesUi();
+                             });
                              mProgressBar.setVisibility(View.GONE);
-
-
                          }
                     }else{
                         Toast.makeText(MainActivity.this, noConnection ,
@@ -140,7 +138,6 @@ public class MainActivity extends AppCompatActivity {
                     new getMovies().execute(formURL(state));
             }
             });
-
     }
 
     private boolean isNetworkAvailable() {
@@ -188,7 +185,6 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected String doInBackground(URL... voids) {
-            //https://api.themoviedb.org/3/discover/movie?api_key=<<api_key>>&language=en-US&sort_by=popularity.desc&include_adult=false&include_video=false&page=1
             //http://api.themoviedb.org/3/movie/157336/videos?api_key=###
             final String API_BASE= getResources().getString(R.string.apiBase);
             final String noReviews = getResources().getString(R.string.noAvailableReview);
@@ -225,7 +221,6 @@ public class MainActivity extends AppCompatActivity {
                         JSONArray trailersArrays = trailersObj.getJSONArray("results");
                         String trailerKey = trailersArrays.getJSONObject(0).getString("key");
                         mMyMovieTrailerKeyList.add(trailerKey);
-
                     }
 
                 }
