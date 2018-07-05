@@ -36,7 +36,7 @@ import java.util.List;
  * Created by keyeona on 5/13/18.
  */
 
-class DetailActivity extends AppCompatActivity{
+class DetailActivity extends AppCompatActivity implements ExpandableListView.OnGroupExpandListener, ExpandableListView.OnGroupCollapseListener, ExpandableListView.OnChildClickListener {
     private String mMyMovieID = new String();
     private String mMyPoster = new String();
     private String mMyMovieRelease = new String();
@@ -130,6 +130,12 @@ class DetailActivity extends AppCompatActivity{
         });
         //The API call return Reviews for a movie
         new getReview().execute();
+        ExpandableListView expandableListView = findViewById(R.id.Reviews);
+        expandableListView.setOnGroupExpandListener(this);
+        expandableListView.setOnGroupCollapseListener(this);
+        expandableListView.setOnChildClickListener(this);
+        reviewsListViewAdapter = new expandableListViewAdapter(DetailActivity.this,listDataHeader,listHashMap);
+        expandableListView.setAdapter(reviewsListViewAdapter);
 
         play_button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -217,6 +223,21 @@ class DetailActivity extends AppCompatActivity{
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onGroupExpand(int groupPosition) {
+
+    }
+
+    @Override
+    public void onGroupCollapse(int groupPosition) {
+
+    }
+
+    @Override
+    public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
+        return false;
+    }
+
     public class getReview extends AsyncTask<URL, Void, String> implements ExpandableListView.OnGroupExpandListener, ExpandableListView.OnGroupCollapseListener, ExpandableListView.OnChildClickListener {
 
         @Override
@@ -228,10 +249,7 @@ class DetailActivity extends AppCompatActivity{
             listDataHeader.clear();
             listDataItem.clear();
 
-            ExpandableListView expandableListView = findViewById(R.id.Reviews);
-            expandableListView.setOnGroupExpandListener(this);
-            expandableListView.setOnGroupCollapseListener(this);
-            expandableListView.setOnChildClickListener(this);
+
 
             JSONObject reviewObj = null;
             try {
@@ -262,8 +280,7 @@ class DetailActivity extends AppCompatActivity{
                  System.out.println(listDataItem.get(i));
                  listHashMap.put(listDataHeader.get(i), eachList);
             }
-            reviewsListViewAdapter = new expandableListViewAdapter(DetailActivity.this,listDataHeader,listHashMap);
-            expandableListView.setAdapter(reviewsListViewAdapter);
+
             return null;
         }
 
