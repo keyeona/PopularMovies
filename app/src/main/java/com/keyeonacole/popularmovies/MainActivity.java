@@ -55,6 +55,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         mGridView = findViewById(R.id.gridview);
 
+        if (savedInstanceState != null) {
+            // Then the application is being reloaded
+            Toast.makeText(getApplicationContext(),  "This is a nightmare.I hate my life.",Toast.LENGTH_SHORT).show();
+
+        }
+
 
         mdb = movieDatabase.getInstance(getApplicationContext());
         // Picasso will handle loading the images on a background thread, image decompression and caching the images.
@@ -66,11 +72,15 @@ public class MainActivity extends AppCompatActivity {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
 
+
+
             //Spinner listener
             spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
                 //Get the Sort by string
                 String state = null;
+
+
 
                 @Override
                 public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
@@ -142,25 +152,23 @@ public class MainActivity extends AppCompatActivity {
                     new getMovies().execute(formURL(state));
             }
             });
+
+
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
-        int index = mGridView.getFirstVisiblePosition();
-        outState.putInt("GRID_VIEW_POSITION", index);
+    public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
+        int lastView = mGridView.getLastVisiblePosition();
+        int firstView = mGridView.getFirstVisiblePosition();
+        outState.putInt("LAST_VISIBLE", lastView);
+        outState.putInt("FIRST_VISIBLE", firstView);
         super.onSaveInstanceState(outState);
     }
 
-
-
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        int index = savedInstanceState.getInt("GRID_VIEW_POSITION");
-
-        mGridView.setSelection(index);
-        System.out.println("Restoring state");
+        mGridView.setSelection(savedInstanceState.getInt("LAST_VISIBLE"));
         super.onRestoreInstanceState(savedInstanceState);
-
     }
 
     private boolean isNetworkAvailable() {
