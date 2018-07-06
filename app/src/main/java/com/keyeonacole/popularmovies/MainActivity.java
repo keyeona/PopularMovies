@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.os.PersistableBundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -41,25 +42,28 @@ public class MainActivity extends AppCompatActivity {
     private List<String> mMyMovieVoteAverageList= new ArrayList<>();
     private List<String> mMyMovieTitleList= new ArrayList<>();
     private List<String> mMyMovieTrailerKeyList= new ArrayList<>();
+    private GridView mGridView;
+
+
 
     private movieDatabase mdb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mGridView = findViewById(R.id.gridview);
+
 
         mdb = movieDatabase.getInstance(getApplicationContext());
         // Picasso will handle loading the images on a background thread, image decompression and caching the images.
         //http://api.themoviedb.org/3/movie/popular?api_key=[YOUR_API_KEY]
         //Please use the string theMovieDbKey
         final Spinner spinner = (Spinner) findViewById(R.id.spinner);
-        // Create an ArrayAdapter using the string array and a default spinner layout
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
                 R.array.filter_options, android.R.layout.simple_spinner_item);
-        // Specify the layout to use when the list of choices appears
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        // Apply the adapter to the spinner
         spinner.setAdapter(adapter);
 
             //Spinner listener
@@ -88,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
                              mProgressBar.setVisibility(View.VISIBLE);
                              mdb = movieDatabase.getInstance(getApplicationContext());
 
-                             LiveData<List<MovieDataEntry>> favoriteMovies = (LiveData<List<MovieDataEntry>>) mdb.MovieDao().getAll();
+                             LiveData<List<MovieDataEntry>> favoriteMovies = mdb.MovieDao().getAll();
                              favoriteMovies.observe(MainActivity.this, new Observer<List<MovieDataEntry>>() {
                                  @Override
                                  public void onChanged(@Nullable List<MovieDataEntry> movieDataEntries) {
@@ -140,6 +144,25 @@ public class MainActivity extends AppCompatActivity {
             });
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        int index = mGridView.getFirstVisiblePosition();
+        outState.putInt("GRID_VIEW_POSITION", index);
+        super.onSaveInstanceState(outState);
+    }
+
+
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        int index = savedInstanceState.getInt("GRID_VIEW_POSITION");
+
+        mGridView.setSelection(index);
+        System.out.println("Restoring state");
+        super.onRestoreInstanceState(savedInstanceState);
+
+    }
+
     private boolean isNetworkAvailable() {
         ConnectivityManager connectivityManager
                 = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -189,8 +212,6 @@ public class MainActivity extends AppCompatActivity {
             final String API_BASE= getResources().getString(R.string.apiBase);
             final String noReviews = getResources().getString(R.string.noAvailableReview);
 
-
-
             String url_check = String.valueOf(voids[0]);
             try {
                 JSONArray moviesArray = null;
@@ -222,7 +243,6 @@ public class MainActivity extends AppCompatActivity {
                         String trailerKey = trailersArrays.getJSONObject(0).getString("key");
                         mMyMovieTrailerKeyList.add(trailerKey);
                     }
-
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -239,11 +259,10 @@ public class MainActivity extends AppCompatActivity {
                 mMyposterList = "THERE WAS AN ERROR: the data returned null";
 
             }
-            GridView gridview = findViewById(R.id.gridview);
             ArrayList<String> al = (ArrayList<String>) mMyPosterList;
             //call the image adapter
-            gridview.setAdapter(new gridViewAdapter(getApplicationContext(), al));
-            gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            mGridView.setAdapter(new gridViewAdapter(getApplicationContext(), al));
+            mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 public void onItemClick(AdapterView<?> parent, View v,
                                         int position, long id) {
                     Intent toNextPage = new Intent(MainActivity.this,
@@ -265,7 +284,6 @@ public class MainActivity extends AppCompatActivity {
             mProgressBar.setVisibility(View.GONE);
             Log.i("INFO", mMyposterList);
         }
-
     }
 
     public class getFavorites {
@@ -273,13 +291,12 @@ public class MainActivity extends AppCompatActivity {
 
         protected void favoritesUi(){
 
-            GridView gridview = findViewById(R.id.gridview);
 
             ArrayList<String> favorites = (ArrayList<String>) mMyPosterList;
             //call the image adapter
-            gridview.setAdapter(new gridViewAdapter(getApplicationContext(), favorites));
+            mGridView.setAdapter(new gridViewAdapter(getApplicationContext(), favorites));
 
-            gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 public void onItemClick(AdapterView<?> parent, View v,
                                         int position, long id) {
                     Intent toNextPage = new Intent(MainActivity.this,

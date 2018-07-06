@@ -36,7 +36,7 @@ import java.util.List;
  * Created by keyeona on 5/13/18.
  */
 
-class DetailActivity extends AppCompatActivity implements ExpandableListView.OnGroupExpandListener, ExpandableListView.OnGroupCollapseListener, ExpandableListView.OnChildClickListener {
+public class DetailActivity extends AppCompatActivity implements ExpandableListView.OnGroupExpandListener, ExpandableListView.OnGroupCollapseListener, ExpandableListView.OnChildClickListener {
     private String mMyMovieID = new String();
     private String mMyPoster = new String();
     private String mMyMovieRelease = new String();
@@ -53,12 +53,6 @@ class DetailActivity extends AppCompatActivity implements ExpandableListView.OnG
     private List<String> listDataHeader = new ArrayList<>();
     private List<String> listDataItem = new ArrayList<String>();
     private HashMap<String,List<String>> listHashMap = new HashMap<>();
-
-
-
-    DetailActivity() {
-
-    }
 
 
     @Override
@@ -119,9 +113,6 @@ class DetailActivity extends AppCompatActivity implements ExpandableListView.OnG
                         public void run() {
                             System.out.println(mMyMovieID);
                             mdb.MovieDao().deleteFav(mMyMovieID);
-                            //mdb.MovieDao().nukeTable();
-
-
                         }
                     };
                     new executeDB().execute(r);

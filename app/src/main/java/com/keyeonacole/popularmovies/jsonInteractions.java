@@ -48,7 +48,6 @@ public class jsonInteractions {
             try {
                 JSONObject movieDataOBJ = jsonData.getJSONObject(i);
                 String movieData = movieDataOBJ.getString(filter);
-                System.out.println(movieData);
                 return movieData;
             } catch (JSONException e) {
                 Log.e("JSON Exception", e.getMessage(), e);
