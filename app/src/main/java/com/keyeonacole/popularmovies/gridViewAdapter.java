@@ -28,7 +28,6 @@ public class gridViewAdapter extends BaseAdapter {
 
     @Override
     public int getCount() {
-
         return  mUrls.size();
     }
 
@@ -53,7 +52,7 @@ public class gridViewAdapter extends BaseAdapter {
 
         if (convertView == null) {
             view = new ImageView(mContext);
-            view.setLayoutParams(new GridView.LayoutParams(520, 600));
+            view.setLayoutParams(new GridView.LayoutParams(600, 600));
             view.setPadding(10, 10, 10, 10);
         } else {
             view = (ImageView) convertView;
@@ -65,6 +64,7 @@ public class gridViewAdapter extends BaseAdapter {
                 .placeholder(R.drawable.placeholder)
                 .error(R.drawable.error)
                 .fit()
+                .centerInside()
                 .tag(mContext)
                 .into(view);
 

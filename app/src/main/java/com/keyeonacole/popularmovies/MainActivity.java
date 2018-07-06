@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.os.Parcelable;
 import android.os.PersistableBundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -44,43 +45,32 @@ public class MainActivity extends AppCompatActivity {
     private List<String> mMyMovieTrailerKeyList= new ArrayList<>();
     private GridView mGridView;
 
-
-
     private movieDatabase mdb;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mGridView = findViewById(R.id.gridview);
+        mdb = movieDatabase.getInstance(getApplicationContext());
+        final Spinner spinner = findViewById(R.id.spinner);
 
         if (savedInstanceState != null) {
             // Then the application is being reloaded
             Toast.makeText(getApplicationContext(),  "This is a nightmare.I hate my life.",Toast.LENGTH_SHORT).show();
-
+            //mGridView.onSaveInstanceState()
         }
-
-
-        mdb = movieDatabase.getInstance(getApplicationContext());
-        // Picasso will handle loading the images on a background thread, image decompression and caching the images.
-        //http://api.themoviedb.org/3/movie/popular?api_key=[YOUR_API_KEY]
-        //Please use the string theMovieDbKey
-        final Spinner spinner = (Spinner) findViewById(R.id.spinner);
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
-                R.array.filter_options, android.R.layout.simple_spinner_item);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(adapter);
-
-
+            //http://api.themoviedb.org/3/movie/popular?api_key=[YOUR_API_KEY]
+            //Please use the string theMovieDbKey
+            ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this, R.array.filter_options, android.R.layout.simple_spinner_item);
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            spinner.setAdapter(adapter);
 
             //Spinner listener
             spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-
                 //Get the Sort by string
                 String state = null;
-
-
 
                 @Override
                 public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
@@ -101,7 +91,6 @@ public class MainActivity extends AppCompatActivity {
                              mProgressBar = findViewById(R.id.progressBar);
                              mProgressBar.setVisibility(View.VISIBLE);
                              mdb = movieDatabase.getInstance(getApplicationContext());
-
                              LiveData<List<MovieDataEntry>> favoriteMovies = mdb.MovieDao().getAll();
                              favoriteMovies.observe(MainActivity.this, new Observer<List<MovieDataEntry>>() {
                                  @Override
@@ -131,43 +120,44 @@ public class MainActivity extends AppCompatActivity {
                                              mMyMovieIds.add(movieID);
 
                                              String trailerKey = movieDataEntries.get(i).getMyTrailer();
-                                             mMyMovieTrailerKeyList.add(trailerKey);
-                                         }
-
-                                         }
+                                             mMyMovieTrailerKeyList.add(trailerKey);}
                                      }
-                                     new getFavorites().favoritesUi();
 
-                                 }
-                             });
-                             mProgressBar.setVisibility(View.GONE);
-                         }
+                                     }new getFavorites().favoritesUi();}
+                             });mProgressBar.setVisibility(View.GONE);}
                     }else{
                         Toast.makeText(MainActivity.this, noConnection ,
-                                Toast.LENGTH_LONG).show();
-                    }
+                                Toast.LENGTH_LONG).show();}
              }
                 @Override
                 public void onNothingSelected(AdapterView<?> parentView) {
-                    new getMovies().execute(formURL(state));
-            }
+                    if (savedInstanceState == null) {
+                        new getMovies().execute(formURL(state));
+                    }
+                }
             });
-
 
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
+    protected void onSaveInstanceState(Bundle outState) {
+        Parcelable state = mGridView.onSaveInstanceState();
+        System.out.println(state);
         int lastView = mGridView.getLastVisiblePosition();
         int firstView = mGridView.getFirstVisiblePosition();
+        outState.putParcelable("STATE", state);
         outState.putInt("LAST_VISIBLE", lastView);
         outState.putInt("FIRST_VISIBLE", firstView);
         super.onSaveInstanceState(outState);
+
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        mGridView.setSelection(savedInstanceState.getInt("LAST_VISIBLE"));
+        //mGridView.setScrollY(savedInstanceState.getInt("FIRST_VISIBLE"));
+        int first = savedInstanceState.getByte("FIRST_VISIBLE");
+        //mGridView.smoothScrollToPosition(first);
+        mGridView.onRestoreInstanceState(savedInstanceState.getParcelable("STATE"));
         super.onRestoreInstanceState(savedInstanceState);
     }
 
@@ -183,8 +173,8 @@ public class MainActivity extends AppCompatActivity {
         final String API_BASE = getResources().getString(R.string.apiBase);
         final String API_Rating = getResources().getString(R.string.Rating);
         final String API_Popularity = getResources().getString(R.string.Popularity);
-
         URL url = null;
+
         try {
             if (spinnerState == "popularity"){
                 url = new URL(API_BASE + API_Popularity + "api_key=" + API_KEY + "&language=en-US&page=1");
@@ -219,7 +209,6 @@ public class MainActivity extends AppCompatActivity {
             //http://api.themoviedb.org/3/movie/157336/videos?api_key=###
             final String API_BASE= getResources().getString(R.string.apiBase);
             final String noReviews = getResources().getString(R.string.noAvailableReview);
-
             String url_check = String.valueOf(voids[0]);
             try {
                 JSONArray moviesArray = null;
@@ -231,7 +220,6 @@ public class MainActivity extends AppCompatActivity {
                     for (int i = 0; i < moviesArray.length(); ++i) {
                         String PosterUrlSuffix = jsonInteractions.parseData(moviesArray, "poster_path", i);
                         String combined = new String("http://image.tmdb.org/t/p/w780/" + PosterUrlSuffix);
-
                         mMyPosterList.add(combined);
                         String myMovieReleaseDate = jsonInteractions.parseData(moviesArray, "release_date", i);
                         mMyMovieReleaseList.add(myMovieReleaseDate);
@@ -262,19 +250,15 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String mMyposterList) {
-
             if (mMyPosterList == null) {
                 mMyposterList = "THERE WAS AN ERROR: the data returned null";
-
             }
             ArrayList<String> al = (ArrayList<String>) mMyPosterList;
             //call the image adapter
             mGridView.setAdapter(new gridViewAdapter(getApplicationContext(), al));
             mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                public void onItemClick(AdapterView<?> parent, View v,
-                                        int position, long id) {
-                    Intent toNextPage = new Intent(MainActivity.this,
-                            DetailActivity.class);
+                public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+                    Intent toNextPage = new Intent(MainActivity.this, DetailActivity.class);
                     Bundle bundle = new Bundle();
                     bundle.putString("MovieRelease", mMyMovieReleaseList.get(position));
                     bundle.putString("MovieTitle", mMyMovieTitleList.get(position));
@@ -285,21 +269,15 @@ public class MainActivity extends AppCompatActivity {
                     bundle.putString("MovieID", mMyMovieIds.get(position));
                     toNextPage.putExtras(bundle);
                     startActivity(toNextPage);
-
                 }
             });
-
             mProgressBar.setVisibility(View.GONE);
             Log.i("INFO", mMyposterList);
         }
     }
 
     public class getFavorites {
-
-
         protected void favoritesUi(){
-
-
             ArrayList<String> favorites = (ArrayList<String>) mMyPosterList;
             //call the image adapter
             mGridView.setAdapter(new gridViewAdapter(getApplicationContext(), favorites));
