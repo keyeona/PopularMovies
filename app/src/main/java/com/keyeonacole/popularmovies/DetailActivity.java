@@ -2,6 +2,7 @@ package com.keyeonacole.popularmovies;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -62,6 +63,8 @@ public class DetailActivity extends AppCompatActivity implements ExpandableListV
         Intent dataIntent = getIntent();
         final Bundle dataBundle = dataIntent.getExtras();
         mdb = movieDatabase.getInstance(getApplicationContext());
+        //final UserModel viewModel = ViewModelProviders.of(this).get(UserModel.class);
+
 
 
         //Should I perform valid checks here?
@@ -184,9 +187,13 @@ public class DetailActivity extends AppCompatActivity implements ExpandableListV
             Boolean validMovieTrailerKey = dataBundle.containsKey("MovieTrailerKey");
             if (validMovieTrailerKey){
                 String youtubeKey = dataBundle.getString("MovieTrailerKey");
-              Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=" + youtubeKey));
-              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
+                if(youtubeKey != null) {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=" + youtubeKey));
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                }else{
+                    Toast.makeText(DetailActivity.this, "No Trailer for this movie is available", Toast.LENGTH_SHORT).show();
+                }
         }
 
         }else {

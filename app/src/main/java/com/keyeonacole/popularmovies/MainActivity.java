@@ -58,8 +58,6 @@ public class MainActivity extends AppCompatActivity {
 
         if (savedInstanceState != null) {
             // Then the application is being reloaded
-            Toast.makeText(getApplicationContext(),  "This is a nightmare.I hate my life.",Toast.LENGTH_SHORT).show();
-            //mGridView.onSaveInstanceState()
         }
             //http://api.themoviedb.org/3/movie/popular?api_key=[YOUR_API_KEY]
             //Please use the string theMovieDbKey
@@ -75,7 +73,6 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
                     final String noConnection = getResources().getString(R.string.noInternetConnection);
-
                     if (isNetworkAvailable()){
                         Integer text = spinner.getSelectedItemPosition();
                          if (text == 0 ){
@@ -87,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
                              state = "popularity";
                              new getMovies().execute(formURL(state));
                         } else if (text == 2){
-                            clearList();
+                             clearList();
                              mProgressBar = findViewById(R.id.progressBar);
                              mProgressBar.setVisibility(View.VISIBLE);
                              mdb = movieDatabase.getInstance(getApplicationContext());
@@ -97,7 +94,6 @@ public class MainActivity extends AppCompatActivity {
                                  public void onChanged(@Nullable List<MovieDataEntry> movieDataEntries) {
                                      if(spinner.getSelectedItemPosition() == 2) {
                                          clearList();
-
                                      Integer fto = movieDataEntries.size();
                                      if (fto > 0){
                                          for (int i = 0; i < fto ; ++i) {
@@ -149,15 +145,15 @@ public class MainActivity extends AppCompatActivity {
         outState.putInt("LAST_VISIBLE", lastView);
         outState.putInt("FIRST_VISIBLE", firstView);
         super.onSaveInstanceState(outState);
-
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         //mGridView.setScrollY(savedInstanceState.getInt("FIRST_VISIBLE"));
-        int first = savedInstanceState.getByte("FIRST_VISIBLE");
-        //mGridView.smoothScrollToPosition(first);
-        mGridView.onRestoreInstanceState(savedInstanceState.getParcelable("STATE"));
+        int first = savedInstanceState.getInt("FIRST_VISIBLE");
+        mGridView.setSelection(first);
+        //mGridView.onRestoreInstanceState(savedInstanceState.getParcelable("STATE"));
+        System.out.println("Is this getting called");
         super.onRestoreInstanceState(savedInstanceState);
     }
 
@@ -216,7 +212,7 @@ public class MainActivity extends AppCompatActivity {
                     JSONObject moviesObj = jsonInteractions.DataFromUrl(voids[0]);
                     moviesArray = moviesObj.getJSONArray("results");
                     final String API_KEY = getResources().getString(R.string.theMovieDbKey);
-
+                    clearList();
                     for (int i = 0; i < moviesArray.length(); ++i) {
                         String PosterUrlSuffix = jsonInteractions.parseData(moviesArray, "poster_path", i);
                         String combined = new String("http://image.tmdb.org/t/p/w780/" + PosterUrlSuffix);
@@ -236,8 +232,13 @@ public class MainActivity extends AppCompatActivity {
                         URL movieTrailers = new URL(API_BASE + movieID + "/videos?api_key=" + API_KEY);
                         JSONObject trailersObj = jsonInteractions.DataFromUrl(movieTrailers);
                         JSONArray trailersArrays = trailersObj.getJSONArray("results");
-                        String trailerKey = trailersArrays.getJSONObject(0).getString("key");
-                        mMyMovieTrailerKeyList.add(trailerKey);
+                        if(trailersArrays.length() > 0) {
+                            String trailerKey = trailersArrays.getJSONObject(0).getString("key");
+                            mMyMovieTrailerKeyList.add(trailerKey);
+                        }else {
+                            String trailerKey = null;
+                            mMyMovieTrailerKeyList.add(trailerKey);
+                        }
                     }
                 }
             } catch (IOException e) {
