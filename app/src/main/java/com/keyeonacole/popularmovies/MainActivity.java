@@ -44,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
     private List<String> mMyMovieTitleList= new ArrayList<>();
     private List<String> mMyMovieTrailerKeyList= new ArrayList<>();
     private GridView mGridView;
+    private Spinner spinner;
 
     private movieDatabase mdb;
 
@@ -54,17 +55,19 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         mGridView = findViewById(R.id.gridview);
         mdb = movieDatabase.getInstance(getApplicationContext());
-        final Spinner spinner = findViewById(R.id.spinner);
+        spinner = findViewById(R.id.spinner);
 
         if (savedInstanceState != null) {
             // Then the application is being reloaded
+            spinner.setSelection(savedInstanceState.getInt("SPINNER", 0));
+            mGridView.setSelection(savedInstanceState.getInt("FIRST_VISIBLE"));
+
         }
             //http://api.themoviedb.org/3/movie/popular?api_key=[YOUR_API_KEY]
             //Please use the string theMovieDbKey
             ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this, R.array.filter_options, android.R.layout.simple_spinner_item);
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             spinner.setAdapter(adapter);
-
             //Spinner listener
             spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 //Get the Sort by string
@@ -78,11 +81,11 @@ public class MainActivity extends AppCompatActivity {
                          if (text == 0 ){
                              clearList();
                              state = "rating";
-                             new getMovies().execute(formURL(state));
+                             //new getMovies().execute(formURL(state));
                         } else if (text == 1){
                              clearList();
                              state = "popularity";
-                             new getMovies().execute(formURL(state));
+                             //new getMovies().execute(formURL(state));
                         } else if (text == 2){
                              clearList();
                              mProgressBar = findViewById(R.id.progressBar);
@@ -118,18 +121,17 @@ public class MainActivity extends AppCompatActivity {
                                              String trailerKey = movieDataEntries.get(i).getMyTrailer();
                                              mMyMovieTrailerKeyList.add(trailerKey);}
                                      }
-
                                      }new getFavorites().favoritesUi();}
-                             });mProgressBar.setVisibility(View.GONE);}
+                             });mProgressBar.setVisibility(View.GONE);
+                        }new getMovies().execute(formURL(state));
                     }else{
                         Toast.makeText(MainActivity.this, noConnection ,
                                 Toast.LENGTH_LONG).show();}
              }
                 @Override
                 public void onNothingSelected(AdapterView<?> parentView) {
-                    if (savedInstanceState == null) {
-                        new getMovies().execute(formURL(state));
-                    }
+                    new getMovies().execute(formURL(state));
+
                 }
             });
 
@@ -137,13 +139,14 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        Parcelable state = mGridView.onSaveInstanceState();
-        System.out.println(state);
-        int lastView = mGridView.getLastVisiblePosition();
+        //Parcelable state = mGridView.onSaveInstanceState();
+        //System.out.println(state);
+        //int lastView = mGridView.getLastVisiblePosition();
         int firstView = mGridView.getFirstVisiblePosition();
-        outState.putParcelable("STATE", state);
-        outState.putInt("LAST_VISIBLE", lastView);
+        //outState.putParcelable("STATE", state);
+        //outState.putInt("LAST_VISIBLE", lastView);
         outState.putInt("FIRST_VISIBLE", firstView);
+        outState.putInt("SPINNER", spinner.getSelectedItemPosition());
         super.onSaveInstanceState(outState);
     }
 
@@ -152,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
         //mGridView.setScrollY(savedInstanceState.getInt("FIRST_VISIBLE"));
         int first = savedInstanceState.getInt("FIRST_VISIBLE");
         mGridView.setSelection(first);
-        //mGridView.onRestoreInstanceState(savedInstanceState.getParcelable("STATE"));
+        //spinner.setSelection(savedInstanceState.getInt("SPINNER", 0));
         System.out.println("Is this getting called");
         super.onRestoreInstanceState(savedInstanceState);
     }

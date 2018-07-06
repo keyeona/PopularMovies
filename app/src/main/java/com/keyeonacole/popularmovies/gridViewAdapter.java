@@ -49,7 +49,6 @@ public class gridViewAdapter extends BaseAdapter {
         String url = getItem(i);
         ImageView view = null;
 
-
         if (convertView == null) {
             view = new ImageView(mContext);
             view.setLayoutParams(new GridView.LayoutParams(600, 600));

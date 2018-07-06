@@ -84,7 +84,6 @@ public class DetailActivity extends AppCompatActivity implements ExpandableListV
             }
         };
         new executeDB().execute(r);
-        //System.out.println("Favorite from db is returning: " + mMyFavorite);
 
         populateUI(dataBundle);
         Switch switch_button =  this.findViewById(R.id.switch1);
@@ -96,7 +95,6 @@ public class DetailActivity extends AppCompatActivity implements ExpandableListV
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if(isChecked){
                     // If the switch button is on
-                    //System.out.println(isChecked);
                     Toast.makeText(DetailActivity.this, " Adding to Favorites", Toast.LENGTH_SHORT).show();
                     final Runnable r = new Runnable() {
                         @Override
@@ -114,7 +112,6 @@ public class DetailActivity extends AppCompatActivity implements ExpandableListV
                     final Runnable r = new Runnable() {
                         @Override
                         public void run() {
-                            System.out.println(mMyMovieID);
                             mdb.MovieDao().deleteFav(mMyMovieID);
                         }
                     };
@@ -275,7 +272,6 @@ public class DetailActivity extends AppCompatActivity implements ExpandableListV
             for(int i = 0; i < listDataHeader.size(); ++i){
                  List<String> eachList = new ArrayList<>();
                  eachList.add(listDataItem.get(i));
-                 System.out.println(listDataItem.get(i));
                  listHashMap.put(listDataHeader.get(i), eachList);
             }
 
