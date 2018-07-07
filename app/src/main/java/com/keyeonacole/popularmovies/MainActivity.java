@@ -59,8 +59,8 @@ public class MainActivity extends AppCompatActivity {
 
         if (savedInstanceState != null) {
             // Then the application is being reloaded
-            spinner.setSelection(savedInstanceState.getInt("SPINNER", 0));
-            mGridView.setSelection(savedInstanceState.getInt("FIRST_VISIBLE"));
+            //spinner.setSelection(savedInstanceState.getInt("SPINNER"));
+            //mGridView.setSelection(savedInstanceState.getInt("FIRST_VISIBLE"));
 
         }
             //http://api.themoviedb.org/3/movie/popular?api_key=[YOUR_API_KEY]
