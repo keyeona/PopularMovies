@@ -81,11 +81,11 @@ public class MainActivity extends AppCompatActivity {
                          if (text == 0 ){
                              clearList();
                              state = "rating";
-                             //new getMovies().execute(formURL(state));
+                             new getMovies().execute(formURL(state));
                         } else if (text == 1){
                              clearList();
                              state = "popularity";
-                             //new getMovies().execute(formURL(state));
+                             new getMovies().execute(formURL(state));
                         } else if (text == 2){
                              clearList();
                              mProgressBar = findViewById(R.id.progressBar);
@@ -123,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
                                      }
                                      }new getFavorites().favoritesUi();}
                              });mProgressBar.setVisibility(View.GONE);
-                        }new getMovies().execute(formURL(state));
+                        }
                     }else{
                         Toast.makeText(MainActivity.this, noConnection ,
                                 Toast.LENGTH_LONG).show();}
