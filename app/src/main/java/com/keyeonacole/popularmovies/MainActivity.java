@@ -140,11 +140,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         //Parcelable state = mGridView.onSaveInstanceState();
-        //System.out.println(state);
-        //int lastView = mGridView.getLastVisiblePosition();
         int firstView = mGridView.getFirstVisiblePosition();
-        //outState.putParcelable("STATE", state);
-        //outState.putInt("LAST_VISIBLE", lastView);
         outState.putInt("FIRST_VISIBLE", firstView);
         outState.putInt("SPINNER", spinner.getSelectedItemPosition());
         super.onSaveInstanceState(outState);
@@ -152,10 +148,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        //mGridView.setScrollY(savedInstanceState.getInt("FIRST_VISIBLE"));
         int first = savedInstanceState.getInt("FIRST_VISIBLE");
         mGridView.setSelection(first);
-        //spinner.setSelection(savedInstanceState.getInt("SPINNER", 0));
+        spinner.setSelection(savedInstanceState.getInt("SPINNER", 0));
         System.out.println("Is this getting called");
         super.onRestoreInstanceState(savedInstanceState);
     }
